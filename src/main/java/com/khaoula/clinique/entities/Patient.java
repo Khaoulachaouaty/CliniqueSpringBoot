@@ -13,9 +13,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Data                    // ← Génère getters, setters, toString, equals, hashCode
-@NoArgsConstructor       // ← Génère constructeur vide
-@AllArgsConstructor      // ← Génère constructeur avec tous les champs
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Patient {
 	
 	@Id
@@ -23,8 +23,8 @@ public class Patient {
 	private int id;
 	
     private String nom;
-    private String email;           // ← pour login
-    private String password;        // ← pour auth
+    private String email;
+    private String password;
     private String dossierMedical;
     private Date dateNaissance;
     private String tel;
