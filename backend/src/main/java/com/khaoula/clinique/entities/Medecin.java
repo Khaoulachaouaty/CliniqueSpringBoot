@@ -1,0 +1,46 @@
+package com.khaoula.clinique.entities;
+
+import java.util.List;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Medecin {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    private String specialite;
+    
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+    
+    @OneToMany(mappedBy = "medecin", cascade = CascadeType.ALL)
+    private List<Disponibilite> disponibilites;
+    
+    @OneToMany(mappedBy = "medecin")
+    private List<RendezVous> rendezVous;
+    
+    public String getNom() {
+        return user != null ? user.getUsername() : null;
+    }
+    
+    public String getEmail() {
+        return user != null ? user.getUsername() : null;
+    }
+}
