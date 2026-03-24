@@ -33,6 +33,10 @@ public class User {
     private String password;
     
     private Boolean enabled;
+
+    // ✅ AJOUT
+    private String nom;
+    private String tel;
     
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(name = "user_role",

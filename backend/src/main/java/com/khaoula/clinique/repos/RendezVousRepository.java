@@ -12,4 +12,8 @@ public interface RendezVousRepository extends JpaRepository<RendezVous, Long> {
     List<RendezVous> findByPatientId(Long patientId);
     List<RendezVous> findByMedecinId(Long medecinId);
     List<RendezVous> findByStatut(String statut);
+    
+    // AJOUTER CES MÉTHODES:
+    List<RendezVous> findByMedecinIdAndStatut(Long medecinId, String statut);
+    List<RendezVous> findByPatientIdAndStatut(Long patientId, String statut);
 }

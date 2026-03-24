@@ -10,4 +10,6 @@ import com.khaoula.clinique.entities.Disponibilite;
 @Repository
 public interface DisponibiliteRepository extends JpaRepository<Disponibilite, Long> {
     List<Disponibilite> findByMedecinId(Long medecinId);
+	List<Disponibilite> findByMedecinIdAndJourSemaine(Long medecinId, String jourSemaine);
+
 }

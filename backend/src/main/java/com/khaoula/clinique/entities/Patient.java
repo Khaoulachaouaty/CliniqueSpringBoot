@@ -26,7 +26,6 @@ public class Patient {
     
     private String dossierMedical;
     private Date dateNaissance;
-    private String tel;
     
     @OneToOne
     @JoinColumn(name = "user_id")

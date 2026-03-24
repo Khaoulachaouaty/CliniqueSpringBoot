@@ -13,4 +13,5 @@ public interface DisponibiliteService {
     Optional<Disponibilite> getDisponibilite(Long id);
     List<Disponibilite> getAllDisponibilites();
     List<Disponibilite> findByMedecinId(Long medecinId);
+	List<Disponibilite> findByMedecinAndJour(Long medecinId, String jour);
 }
