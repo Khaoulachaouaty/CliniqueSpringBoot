@@ -18,7 +18,6 @@ import com.khaoula.clinique.service.NotificationService;
 
 @RestController
 @RequestMapping("/api/notifications")
-@CrossOrigin(origins = "*")
 public class NotificationRESTController {
 
     @Autowired

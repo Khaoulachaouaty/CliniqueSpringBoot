@@ -19,7 +19,6 @@ import com.khaoula.clinique.service.RendezVousService;
 
 @RestController
 @RequestMapping("/api/rendezvous")
-@CrossOrigin(origins = "*")
 public class RendezVousRESTController {
 
     @Autowired

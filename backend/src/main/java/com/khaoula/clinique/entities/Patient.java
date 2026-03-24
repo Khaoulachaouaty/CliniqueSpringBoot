@@ -26,6 +26,7 @@ public class Patient {
     
     private String dossierMedical;
     private Date dateNaissance;
+    // tel supprimé - maintenant dans User
     
     @OneToOne
     @JoinColumn(name = "user_id")
@@ -34,11 +35,24 @@ public class Patient {
     @OneToMany(mappedBy = "patient")
     private List<RendezVous> rendezVous;
     
+    // Méthodes pour accéder aux données du User
     public String getNom() {
-        return user != null ? user.getUsername() : null;
+        return user != null ? user.getNom() : null;
+    }
+    
+    public String getPrenom() {
+        return user != null ? user.getPrenom() : null;
+    }
+    
+    public String getNomComplet() {
+        return user != null ? user.getNomComplet() : null;
     }
     
     public String getEmail() {
         return user != null ? user.getUsername() : null;
+    }
+    
+    public String getTel() {
+        return user != null ? user.getTel() : null;
     }
 }

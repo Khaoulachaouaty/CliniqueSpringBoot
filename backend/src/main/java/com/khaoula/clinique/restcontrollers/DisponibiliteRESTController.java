@@ -18,7 +18,6 @@ import com.khaoula.clinique.service.DisponibiliteService;
 
 @RestController
 @RequestMapping("/api/disponibilites")
-@CrossOrigin(origins = "*")
 public class DisponibiliteRESTController {
 
     @Autowired

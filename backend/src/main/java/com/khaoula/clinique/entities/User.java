@@ -28,15 +28,17 @@ public class User {
     private Long userId;
     
     @Column(unique = true)
-    private String username;
+    private String username; // email
     
     private String password;
     
-    private Boolean enabled;
-
-    // ✅ AJOUT
     private String nom;
+    
+    private String prenom;
+    
     private String tel;
+    
+    private Boolean enabled;
     
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinTable(name = "user_role",
@@ -49,4 +51,9 @@ public class User {
     
     @OneToOne(mappedBy = "user")
     private Medecin medecin;
+    
+    // Méthode utilitaire pour obtenir le nom complet
+    public String getNomComplet() {
+        return (prenom != null ? prenom : "") + " " + (nom != null ? nom : "");
+    }
 }

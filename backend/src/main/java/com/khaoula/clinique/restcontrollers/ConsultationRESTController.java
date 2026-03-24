@@ -18,7 +18,6 @@ import com.khaoula.clinique.service.ConsultationService;
 
 @RestController
 @RequestMapping("/api/consultations")
-@CrossOrigin(origins = "*")
 public class ConsultationRESTController {
 
     @Autowired

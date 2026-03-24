@@ -18,7 +18,6 @@ import com.khaoula.clinique.service.RoleService;
 
 @RestController
 @RequestMapping("/api/roles")
-@CrossOrigin(origins = "*")
 public class RoleRESTController {
 
     @Autowired
