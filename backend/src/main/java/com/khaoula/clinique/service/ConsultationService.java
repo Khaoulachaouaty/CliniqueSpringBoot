@@ -1,16 +1,12 @@
 package com.khaoula.clinique.service;
 
-import java.util.List;
-import java.util.Optional;
-
 import com.khaoula.clinique.entities.Consultation;
+import java.util.List;
 
 public interface ConsultationService {
     Consultation saveConsultation(Consultation consultation);
-    Consultation updateConsultation(Consultation consultation);
-    void deleteConsultation(Consultation consultation);
-    void deleteConsultationById(Long id);
-    Optional<Consultation> getConsultation(Long id);
+    Consultation getConsultationById(Long id);
+    Consultation getConsultationByRendezVous(Long rendezVousId);
     List<Consultation> getAllConsultations();
-    Optional<Consultation> findByRendezVousId(Long rendezVousId);
+    double getTotalFacture(Long consultationId);
 }

@@ -1,73 +1,75 @@
 package com.khaoula.clinique.restcontrollers;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.khaoula.clinique.entities.RendezVous;
 import com.khaoula.clinique.service.RendezVousService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/rendezvous")
+@CrossOrigin(origins = "*")
 public class RendezVousRESTController {
-
+    
     @Autowired
     private RendezVousService rendezVousService;
-
-    @GetMapping
+    
+    @PostMapping("/save")
+    public RendezVous saveRendezVous(@RequestBody RendezVous rendezVous) {
+        return rendezVousService.saveRendezVous(rendezVous);
+    }
+    
+    @GetMapping("/all")
     public List<RendezVous> getAllRendezVous() {
         return rendezVousService.getAllRendezVous();
     }
-
+    
     @GetMapping("/{id}")
     public RendezVous getRendezVousById(@PathVariable Long id) {
-        return rendezVousService.getRendezVous(id).orElse(null);
-    }
-
-    @PostMapping
-    public RendezVous createRendezVous(@RequestBody RendezVous rendezVous) {
-        return rendezVousService.saveRendezVous(rendezVous);
-    }
-
-    @PutMapping("/{id}")
-    public RendezVous updateRendezVous(@PathVariable Long id, @RequestBody RendezVous rendezVous) {
-        rendezVous.setId(id);
-        return rendezVousService.updateRendezVous(rendezVous);
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteRendezVous(@PathVariable Long id) {
-        rendezVousService.deleteRendezVousById(id);
-    }
-
-    @GetMapping("/patient/{patientId}")
-    public List<RendezVous> getRendezVousByPatient(@PathVariable Long patientId) {
-        return rendezVousService.findByPatientId(patientId);
-    }
-
-    @GetMapping("/medecin/{medecinId}")
-    public List<RendezVous> getRendezVousByMedecin(@PathVariable Long medecinId) {
-        return rendezVousService.findByMedecinId(medecinId);
-    }
-
-    @GetMapping("/statut/{statut}")
-    public List<RendezVous> getRendezVousByStatut(@PathVariable String statut) {
-        return rendezVousService.findByStatut(statut);
+        return rendezVousService.getRendezVousById(id);
     }
     
-    @PostMapping("/verifier-disponibilite")
-    public ResponseEntity<?> verifierDisponibilite(@RequestBody RendezVous rdv) {
-    	boolean disponible = rendezVousService.verifierDisponibilite(rdv);
-    	return ResponseEntity.ok(disponible);
+    @GetMapping("/patient/{patientId}")
+    public List<RendezVous> getRendezVousByPatient(@PathVariable Long patientId) {
+        return rendezVousService.getRendezVousByPatient(patientId);
+    }
+    
+    @GetMapping("/medecin/{medecinId}")
+    public List<RendezVous> getRendezVousByMedecin(@PathVariable Long medecinId) {
+        return rendezVousService.getRendezVousByMedecin(medecinId);
+    }
+    
+    @GetMapping("/medecin/{medecinId}/date/{date}")
+    public List<RendezVous> getRendezVousByMedecinAndDate(
+            @PathVariable Long medecinId,
+            @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") Date date) {
+        return rendezVousService.getRendezVousByMedecinAndDate(medecinId, date);
+    }
+    
+    @PutMapping("/accepter/{id}")
+    public RendezVous accepterRendezVous(@PathVariable Long id) {
+        return rendezVousService.accepterRendezVous(id);
+    }
+    
+    @PutMapping("/refuser/{id}")
+    public RendezVous refuserRendezVous(@PathVariable Long id) {
+        return rendezVousService.refuserRendezVous(id);
+    }
+    
+    @GetMapping("/verifier-disponibilite")
+    public boolean verifierDisponibilite(
+            @RequestParam Long medecinId,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date date,
+            @RequestParam String heure) {
+        return rendezVousService.verifierDisponibilite(medecinId, date, heure);
+    }
+    
+    @DeleteMapping("/delete/{id}")
+    public void deleteRendezVous(@PathVariable Long id) {
+        rendezVousService.deleteRendezVous(id);
     }
 }

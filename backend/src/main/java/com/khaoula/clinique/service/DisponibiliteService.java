@@ -1,17 +1,12 @@
 package com.khaoula.clinique.service;
 
-import java.util.List;
-import java.util.Optional;
-
 import com.khaoula.clinique.entities.Disponibilite;
+import java.util.List;
 
 public interface DisponibiliteService {
     Disponibilite saveDisponibilite(Disponibilite disponibilite);
-    Disponibilite updateDisponibilite(Disponibilite disponibilite);
-    void deleteDisponibilite(Disponibilite disponibilite);
-    void deleteDisponibiliteById(Long id);
-    Optional<Disponibilite> getDisponibilite(Long id);
+    Disponibilite getDisponibiliteById(Long id);
+    List<Disponibilite> getDisponibilitesByMedecin(Long medecinId);
     List<Disponibilite> getAllDisponibilites();
-    List<Disponibilite> findByMedecinId(Long medecinId);
-	List<Disponibilite> findByMedecinAndJour(Long medecinId, String jour);
+    void deleteDisponibilite(Long id);
 }

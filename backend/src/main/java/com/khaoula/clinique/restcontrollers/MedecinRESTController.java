@@ -1,56 +1,49 @@
 package com.khaoula.clinique.restcontrollers;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.khaoula.clinique.entities.Medecin;
 import com.khaoula.clinique.service.MedecinService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/medecins")
+@CrossOrigin(origins = "*")
 public class MedecinRESTController {
-
+    
     @Autowired
     private MedecinService medecinService;
-
-    @GetMapping
-    public List<Medecin> getAllMedecins() {
-        return medecinService.getAllMedecins();
+    
+    @PostMapping("/save")
+    public Medecin saveMedecin(@RequestBody Medecin medecin) {
+        return medecinService.saveMedecin(medecin);
     }
-
-    @GetMapping("/{id}")
-    public Medecin getMedecinById(@PathVariable Long id) {
-        return medecinService.getMedecin(id).orElse(null);
-    }
-
+    
     @PostMapping
     public Medecin createMedecin(@RequestBody Medecin medecin) {
         return medecinService.saveMedecin(medecin);
     }
-
-    @PutMapping("/{id}")
-    public Medecin updateMedecin(@PathVariable Long id, @RequestBody Medecin medecin) {
-        medecin.setId(id);
-        return medecinService.updateMedecin(medecin);
+   
+    
+    @GetMapping("/all")
+    public List<Medecin> getAllMedecins() {
+        return medecinService.getAllMedecins();
     }
-
-    @DeleteMapping("/{id}")
-    public void deleteMedecin(@PathVariable Long id) {
-        medecinService.deleteMedecinById(id);
+    
+    @GetMapping("/{id}")
+    public Medecin getMedecinById(@PathVariable Long id) {
+        return medecinService.getMedecinById(id);
     }
-
+    
     @GetMapping("/specialite/{specialite}")
     public List<Medecin> getMedecinsBySpecialite(@PathVariable String specialite) {
-        return medecinService.findBySpecialite(specialite);
+        return medecinService.getMedecinsBySpecialite(specialite);
+    }
+    
+    @DeleteMapping("/delete/{id}")
+    public void deleteMedecin(@PathVariable Long id) {
+        medecinService.deleteMedecin(id);
     }
 }

@@ -1,24 +1,18 @@
 package com.khaoula.clinique.service;
 
-import java.util.List;
-import java.util.Optional;
-
 import com.khaoula.clinique.entities.RendezVous;
+import java.util.Date;
+import java.util.List;
 
 public interface RendezVousService {
-	
-	RendezVous saveRendezVous(RendezVous r);
-	RendezVous updateRendezVous(RendezVous r);
-	void deleteRendezVous(RendezVous r);
-	void deleteRendezVousById(Long id);
-	Optional<RendezVous> getRendezVous(Long id);
-	List<RendezVous> getAllRendezVous();
-	List<RendezVous> findByPatientId(Long patientId);
-	List<RendezVous> findByMedecinId(Long medecinId);
-	List<RendezVous> findByStatut(String statut);
-	List<RendezVous> findByMedecinAndStatut(Long medecinId, String statut);
-	List<RendezVous> findByPatientAndStatut(Long patientId, String statut);
-	
-	// AJOUTER CETTE MÉTHODE :
-	boolean verifierDisponibilite(RendezVous rdv);
+    RendezVous saveRendezVous(RendezVous rendezVous);
+    RendezVous getRendezVousById(Long id);
+    List<RendezVous> getRendezVousByPatient(Long patientId);
+    List<RendezVous> getRendezVousByMedecin(Long medecinId);
+    List<RendezVous> getRendezVousByMedecinAndDate(Long medecinId, Date date);
+    List<RendezVous> getAllRendezVous();
+    RendezVous accepterRendezVous(Long id);
+    RendezVous refuserRendezVous(Long id);
+    void deleteRendezVous(Long id);
+    boolean verifierDisponibilite(Long medecinId, Date date, String heure);
 }

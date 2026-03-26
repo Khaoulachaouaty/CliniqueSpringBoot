@@ -1,13 +1,10 @@
-package com.khaoula.clinique.repos;
+package com.khaoula.clinique.repository;
 
-import java.util.Optional;
-
+import com.khaoula.clinique.entities.Patient;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.khaoula.clinique.entities.Patient;
-
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Long> {
-    Optional<Patient> findByUserUserId(Long userId);
+    Patient findByUserUsername(String username);
 }

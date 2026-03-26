@@ -1,15 +1,13 @@
-package com.khaoula.clinique.repos;
+package com.khaoula.clinique.repository;
 
-import java.util.List;
-import java.util.Optional;
-
+import com.khaoula.clinique.entities.Medecin;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.khaoula.clinique.entities.Medecin;
+import java.util.List;
 
 @Repository
 public interface MedecinRepository extends JpaRepository<Medecin, Long> {
-    Optional<Medecin> findByUserUserId(Long userId);
     List<Medecin> findBySpecialite(String specialite);
+    Medecin findByUserUsername(String username);
 }

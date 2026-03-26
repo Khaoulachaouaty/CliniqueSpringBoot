@@ -1,64 +1,40 @@
 package com.khaoula.clinique.service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
+import com.khaoula.clinique.entities.Disponibilite;
+import com.khaoula.clinique.repository.DisponibiliteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.khaoula.clinique.entities.Disponibilite;
-import com.khaoula.clinique.repos.DisponibiliteRepository;
+import java.util.List;
 
 @Service
 public class DisponibiliteServiceImpl implements DisponibiliteService {
-
+    
     @Autowired
     private DisponibiliteRepository disponibiliteRepository;
-
+    
     @Override
     public Disponibilite saveDisponibilite(Disponibilite disponibilite) {
         return disponibiliteRepository.save(disponibilite);
     }
-
+    
     @Override
-    public Disponibilite updateDisponibilite(Disponibilite disponibilite) {
-        return disponibiliteRepository.save(disponibilite);
+    public Disponibilite getDisponibiliteById(Long id) {
+        return disponibiliteRepository.findById(id).orElse(null);
     }
-
+    
     @Override
-    public void deleteDisponibilite(Disponibilite disponibilite) {
-        disponibiliteRepository.delete(disponibilite);
-    }
-
-    @Override
-    public void deleteDisponibiliteById(Long id) {
-        disponibiliteRepository.deleteById(id);
-    }
-
-    @Override
-    public Optional<Disponibilite> getDisponibilite(Long id) {
-        return disponibiliteRepository.findById(id);
-    }
-
-    @Override
-    public List<Disponibilite> getAllDisponibilites() {
-        return disponibiliteRepository.findAll();
-    }
-
-    @Override
-    public List<Disponibilite> findByMedecinId(Long medecinId) {
+    public List<Disponibilite> getDisponibilitesByMedecin(Long medecinId) {
         return disponibiliteRepository.findByMedecinId(medecinId);
     }
     
     @Override
-    public List<Disponibilite> findByMedecinAndJour(Long medecinId, String jour) {
-        // Récupérer toutes les disponibilités du médecin
-        List<Disponibilite> all = disponibiliteRepository.findByMedecinId(medecinId);
-        
-        // Filtrer par jour en Java
-        return all.stream()
-                  .filter(d -> d.getJourSemaine().equalsIgnoreCase(jour))
-                  .collect(Collectors.toList());
+    public List<Disponibilite> getAllDisponibilites() {
+        return disponibiliteRepository.findAll();
     }
-}
+    
+    @Override
+    public void deleteDisponibilite(Long id) {
+        disponibiliteRepository.deleteById(id);
+    }
+} 	
