@@ -26,20 +26,17 @@ public class AdminController {
         this.medecinService = medecinService;
     }
 
-    // POST /api/admin/medecins - Créer un médecin
     @PostMapping("/medecins")
-    public ResponseEntity<MessageResponse> createMedecin(
+    public ResponseEntity<AuthResponse> createMedecin(
             @Valid @RequestBody CreateMedecinRequest request) {
         return ResponseEntity.ok(authService.createMedecin(request));
     }
 
-    // GET /api/admin/patients - Liste tous les patients
     @GetMapping("/patients")
     public ResponseEntity<List<PatientResponse>> getAllPatients() {
         return ResponseEntity.ok(patientService.getAllPatients());
     }
 
-    // GET /api/admin/medecins - Liste tous les médecins
     @GetMapping("/medecins")
     public ResponseEntity<List<MedecinResponse>> getAllMedecins() {
         return ResponseEntity.ok(medecinService.getAllMedecins());

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -30,13 +32,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public MessageResponse registerPatient(RegisterPatientRequest request) {
-        // Vérifier si email existe déjà
+    public AuthResponse registerPatient(RegisterPatientRequest request) {
         if (userRepository.existsByUsername(request.getEmail())) {
-            return new MessageResponse("Cet email est déjà utilisé", false);
+            return AuthResponse.builder()
+                    .message("Cet email est déjà utilisé")
+                    .success(false)
+                    .build();
         }
         
-        // Créer ou récupérer le rôle PATIENT
         Role patientRole = roleRepository.findByRole("PATIENT")
                 .orElseGet(() -> {
                     Role newRole = new Role();
@@ -44,7 +47,6 @@ public class AuthServiceImpl implements AuthService {
                     return roleRepository.save(newRole);
                 });
         
-        // Créer l'utilisateur
         User user = new User();
         user.setUsername(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -56,24 +58,31 @@ public class AuthServiceImpl implements AuthService {
         
         User savedUser = userRepository.save(user);
         
-        // Créer le patient
         Patient patient = new Patient();
         patient.setUser(savedUser);
         patient.setDateNaissance(request.getDateNaissance());
         patient.setDossierMedical(request.getDossierMedical());
         patientRepository.save(patient);
         
-        return new MessageResponse("Patient inscrit avec succès", true);
+        return AuthResponse.builder()
+                .message("Patient inscrit avec succès")
+                .success(true)
+                .userId(savedUser.getUserId())
+                .email(savedUser.getUsername())
+                .nomComplet(savedUser.getNomComplet())
+                .roles(Collections.singletonList("PATIENT"))
+                .build();
     }
 
     @Override
-    public MessageResponse createMedecin(CreateMedecinRequest request) {
-        // Vérifier si email existe déjà
+    public AuthResponse createMedecin(CreateMedecinRequest request) {
         if (userRepository.existsByUsername(request.getEmail())) {
-            return new MessageResponse("Cet email est déjà utilisé", false);
+            return AuthResponse.builder()
+                    .message("Cet email est déjà utilisé")
+                    .success(false)
+                    .build();
         }
         
-        // Créer ou récupérer le rôle MEDECIN
         Role medecinRole = roleRepository.findByRole("MEDECIN")
                 .orElseGet(() -> {
                     Role newRole = new Role();
@@ -81,7 +90,6 @@ public class AuthServiceImpl implements AuthService {
                     return roleRepository.save(newRole);
                 });
         
-        // Créer l'utilisateur
         User user = new User();
         user.setUsername(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -93,35 +101,61 @@ public class AuthServiceImpl implements AuthService {
         
         User savedUser = userRepository.save(user);
         
-        // Créer le médecin
         Medecin medecin = new Medecin();
         medecin.setUser(savedUser);
         medecin.setSpecialite(request.getSpecialite());
         medecinRepository.save(medecin);
         
-        return new MessageResponse("Médecin créé avec succès", true);
+        return AuthResponse.builder()
+                .message("Médecin créé avec succès")
+                .success(true)
+                .userId(savedUser.getUserId())
+                .email(savedUser.getUsername())
+                .nomComplet(savedUser.getNomComplet())
+                .roles(Collections.singletonList("MEDECIN"))
+                .build();
     }
 
     @Override
-    public MessageResponse login(LoginRequest request) {
-        // Chercher l'utilisateur
+    public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByUsername(request.getEmail())
                 .orElse(null);
         
         if (user == null) {
-            return new MessageResponse("Email ou mot de passe incorrect", false);
+            return AuthResponse.builder()
+                    .message("Email ou mot de passe incorrect")
+                    .success(false)
+                    .build();
         }
         
-        // Vérifier le mot de passe
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            return new MessageResponse("Email ou mot de passe incorrect", false);
+            return AuthResponse.builder()
+                    .message("Email ou mot de passe incorrect")
+                    .success(false)
+                    .build();
         }
         
-        // Vérifier si compte actif
         if (user.getEnabled() == null || !user.getEnabled()) {
-            return new MessageResponse("Compte désactivé", false);
+            return AuthResponse.builder()
+                    .message("Compte désactivé")
+                    .success(false)
+                    .build();
         }
         
-        return new MessageResponse("Connexion réussie", true);
+        // 🔥 EXTRAIRE LES RÔLES
+        List<String> roleNames = user.getRoles().stream()
+                .map(Role::getRole)
+                .collect(Collectors.toList());
+        
+        System.out.println("✅ Login: " + user.getUsername() + " | Rôles: " + roleNames);
+        
+        return AuthResponse.builder()
+                .message("Connexion réussie")
+                .success(true)
+                .userId(user.getUserId())
+                .email(user.getUsername())
+                .nomComplet(user.getNomComplet())
+                .roles(roleNames)
+                .build();
     }
 }

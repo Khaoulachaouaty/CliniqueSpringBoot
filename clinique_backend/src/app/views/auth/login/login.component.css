@@ -1,0 +1,64 @@
+.auth-wrapper {
+  background: linear-gradient(135deg, #fafaf9 0%, #f0fdf4 100%);
+  min-height: 100vh;
+}
+
+.auth-card {
+  background: white;
+  border-radius: 2rem;
+  padding: 2.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+}
+
+.brand-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  border-radius: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-5deg);
+}
+
+.input-group-text {
+  border-radius: 1rem 0 0 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.form-control {
+  border-radius: 0 1rem 1rem 0;
+}
+
+.input-group .form-control {
+  border-left: none;
+}
+
+.input-group .input-group-text:last-child {
+  border-radius: 0 1rem 1rem 0;
+  cursor: pointer;
+}
+
+.divider {
+  position: relative;
+  text-align: center;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e7e5e4;
+}
+
+.divider-text {
+  position: relative;
+  background: white;
+  padding: 0 1rem;
+  color: #a8a29e;
+  font-size: 0.875rem;
+}

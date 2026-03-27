@@ -1,0 +1,113 @@
+<div class="admin-page">
+  <div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="fw-bold text-success mb-1">Nouveau Médecin</h2>
+        <p class="text-muted mb-0">Créer un compte professionnel</p>
+      </div>
+      <a routerLink="/admin/dashboard" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Retour au dashboard
+      </a>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-lg rounded-4">
+          <div class="card-body p-4">
+            <!-- Icon -->
+            <div class="text-center mb-4">
+              <div class="icon-circle bg-warning bg-opacity-10 text-warning mx-auto mb-3">
+                <i class="bi bi-person-plus-fill fs-2"></i>
+              </div>
+            </div>
+
+            <!-- Alerts -->
+            @if (errorMessage) {
+              <div class="alert alert-danger d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <small>{{ errorMessage }}</small>
+              </div>
+            }
+
+            @if (successMessage) {
+              <div class="alert alert-success d-flex align-items-center">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <small>{{ successMessage }}</small>
+              </div>
+            }
+
+            <!-- Form -->
+            <form [formGroup]="medecinForm" (ngSubmit)="onSubmit()">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Nom *</label>
+                  <input type="text" class="form-control" formControlName="nom" placeholder="Martin">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Prénom *</label>
+                  <input type="text" class="form-control" formControlName="prenom" placeholder="Sophie">
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Email professionnel *</label>
+                <input type="email" class="form-control" formControlName="email" placeholder="dr.martin@mediclinic.com">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Téléphone</label>
+                <input type="tel" class="form-control" formControlName="tel" placeholder="0687654321">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label small fw-semibold">Spécialité *</label>
+                <select class="form-select" formControlName="specialite">
+                  <option value="">Choisir...</option>
+                  @for (spec of specialites; track spec) {
+                    <option [value]="spec">{{ spec }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Mot de passe *</label>
+                  <div class="input-group">
+                    <input [type]="showPassword ? 'text' : 'password'" class="form-control" formControlName="password" placeholder="6 caractères min">
+                    <button type="button" class="btn btn-outline-secondary" (click)="showPassword = !showPassword">
+                      <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-semibold">Confirmer *</label>
+                  <div class="input-group">
+                    <input [type]="showConfirmPassword ? 'text' : 'password'" class="form-control" formControlName="confirmPassword" placeholder="Répéter">
+                    <button type="button" class="btn btn-outline-secondary" (click)="showConfirmPassword = !showConfirmPassword">
+                      <i class="bi" [class.bi-eye]="!showConfirmPassword" [class.bi-eye-slash]="showConfirmPassword"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 mt-4">
+                <button type="button" class="btn btn-outline-secondary flex-grow-1" (click)="medecinForm.reset()">
+                  Annuler
+                </button>
+                <button type="submit" class="btn btn-warning flex-grow-1 text-white" [disabled]="isLoading" style="background: #f59e0b; border: none;">
+                  @if (isLoading) {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                  } @else {
+                    <i class="bi bi-check-lg me-1"></i>
+                  }
+                  Créer le compte
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

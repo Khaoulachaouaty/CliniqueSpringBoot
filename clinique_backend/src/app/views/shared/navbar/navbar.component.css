@@ -1,0 +1,52 @@
+.nav-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.navbar-toggler {
+  font-size: 1.5rem;
+  color: #059669;
+}
+
+.nav-link {
+  font-weight: 500;
+  color: #57534e;
+  border-radius: 50px;
+  transition: all 0.2s;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: #059669;
+  background: #f0fdf4;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.dropdown-menu {
+  min-width: 220px;
+  padding: 0.5rem;
+}
+
+.dropdown-item {
+  border-radius: 0.5rem;
+  transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+  background: #f0fdf4;
+}

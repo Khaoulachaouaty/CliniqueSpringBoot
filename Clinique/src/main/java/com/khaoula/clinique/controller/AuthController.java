@@ -17,16 +17,14 @@ public class AuthController {
         this.authService = authService;
     }
 
-    // POST /api/auth/register/patient
     @PostMapping("/register/patient")
-    public ResponseEntity<MessageResponse> registerPatient(
+    public ResponseEntity<AuthResponse> registerPatient(
             @Valid @RequestBody RegisterPatientRequest request) {
         return ResponseEntity.ok(authService.registerPatient(request));
     }
 
-    // POST /api/auth/login
     @PostMapping("/login")
-    public ResponseEntity<MessageResponse> login(
+    public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }

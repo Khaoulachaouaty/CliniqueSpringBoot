@@ -1,0 +1,121 @@
+.auth-wrapper {
+  background: linear-gradient(135deg, #fafaf9 0%, #f0fdf4 100%);
+  min-height: 100vh;
+}
+
+.auth-card {
+  background: white;
+  border-radius: 2rem;
+  padding: 2rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+}
+
+.brand-icon {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  border-radius: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(5deg);
+}
+
+/* Progress Steps */
+.progress-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.step {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #e7e5e4;
+  transition: all 0.3s;
+}
+
+.step.active {
+  background: #059669;
+  transform: scale(1.2);
+}
+
+.step-line {
+  width: 40px;
+  height: 2px;
+  background: #e7e5e4;
+}
+
+/* Form Controls Compact */
+.form-control-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.75rem;
+}
+
+.input-group-sm .input-group-text {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem 0 0 0.75rem;
+}
+
+.input-group-sm .form-control {
+  border-radius: 0 0.75rem 0.75rem 0;
+}
+
+.input-group-sm .input-group-text:last-child {
+  border-radius: 0 0.75rem 0.75rem 0;
+}
+
+/* Divider */
+.divider {
+  position: relative;
+  text-align: center;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e7e5e4;
+}
+
+.divider-text {
+  position: relative;
+  background: white;
+  padding: 0 0.75rem;
+  color: #a8a29e;
+  font-size: 0.75rem;
+}
+
+/* Buttons */
+.btn-outline-secondary {
+  border: 2px solid #e7e5e4;
+  color: #78716c;
+  background: transparent;
+}
+
+.btn-outline-secondary:hover {
+  border-color: #059669;
+  color: #059669;
+  background: #f0fdf4;
+}
+
+/* Labels compact */
+.form-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+h6 {
+  font-size: 0.9375rem;
+}
+
+/* Invalid feedback compact */
+.invalid-feedback {
+  font-size: 0.75rem;
+}

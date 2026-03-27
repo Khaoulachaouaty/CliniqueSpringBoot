@@ -1,0 +1,117 @@
+.dashboard-wrapper {
+  background: #f8fafc;
+  min-height: calc(100vh - 70px);
+}
+
+.dashboard-header {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Stats Cards */
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.stat-patients {
+  border-left: 4px solid #059669;
+}
+
+.stat-medecins {
+  border-left: 4px solid #f59e0b;
+}
+
+.stat-rdv {
+  border-left: 4px solid #0ea5e9;
+}
+
+.stat-occupation {
+  border-left: 4px solid #ef4444;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.stat-change {
+  font-size: 0.75rem;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+/* Content Cards */
+.content-card {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.card-header-custom {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* Chart */
+.bar {
+  width: 100%;
+  min-height: 20px;
+  transition: all 0.3s;
+}
+
+.bar:hover {
+  opacity: 1 !important;
+}
+
+/* Avatar */
+.avatar-sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+}
+
+/* Specialite item */
+.specialite-item {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.specialite-item:last-child {
+  border-bottom: none;
+}
+
+/* Table */
+.table > :not(caption) > * > * {
+  padding: 1rem 1.5rem;
+}
