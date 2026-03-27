@@ -1,6 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, catchError, of } from 'rxjs';
+import { Observable, map, catchError, of, tap } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
 import { 
   LoginRequest, 
@@ -16,9 +16,15 @@ import {
 export class AuthService {
   private readonly API_URL = API_CONFIG.baseUrl;
   
-  currentUser = signal<User | null>(this.getUserFromStorage());
-  userRole = signal<string | null>(localStorage.getItem('userRole'));
-  isLoggedIn = signal<boolean>(!!localStorage.getItem('currentUser'));
+  // Signaux privés
+  private _currentUser = signal<User | null>(this.getUserFromStorage());
+  private _userRole = signal<string | null>(localStorage.getItem('userRole'));
+  private _isLoggedIn = signal<boolean>(!!localStorage.getItem('currentUser'));
+
+  // Signaux publics en lecture seule (computed pour la réactivité)
+  currentUser = computed(() => this._currentUser());
+  userRole = computed(() => this._userRole());
+  isLoggedIn = computed(() => this._isLoggedIn());
 
   constructor(private http: HttpClient) {}
 
@@ -42,7 +48,6 @@ export class AuthService {
             };
           }
 
-          // Extraire le premier rôle
           const roles = response.roles || [];
           const role = roles.length > 0 ? roles[0] : null;
           
@@ -101,17 +106,17 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('userRole');
-    this.currentUser.set(null);
-    this.userRole.set(null);
-    this.isLoggedIn.set(false);
+    this._currentUser.set(null);
+    this._userRole.set(null);
+    this._isLoggedIn.set(false);
   }
 
   private saveUser(user: User, role: string): void {
     localStorage.setItem('currentUser', JSON.stringify(user));
     localStorage.setItem('userRole', role);
-    this.userRole.set(role);
-    this.currentUser.set(user);
-    this.isLoggedIn.set(true);
+    this._userRole.set(role);
+    this._currentUser.set(user);
+    this._isLoggedIn.set(true);
     console.log('💾 Sauvegardé:', { user, role });
   }
 
@@ -121,6 +126,6 @@ export class AuthService {
   }
 
   getCurrentRole(): string | null {
-    return this.userRole() || localStorage.getItem('userRole');
+    return this._userRole();
   }
 }

@@ -4,13 +4,13 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
-  selector: 'app-navbar',
+  selector: 'app-patient-navbar',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.css']
+  templateUrl: './patient-navbar.component.html',
+  styleUrls: ['./patient-navbar.component.css']
 })
-export class NavbarComponent {
+export class PatientNavbarComponent {
   isMenuOpen = false;
   isDropdownOpen = false;
 
@@ -23,6 +23,6 @@ export class NavbarComponent {
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/']);
+    this.router.navigate(['/login']);
   }
 }

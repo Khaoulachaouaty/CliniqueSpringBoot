@@ -30,4 +30,18 @@ export class ApiService {
       `${this.API_URL}${API_CONFIG.endpoints.public.medecinsBySpecialite}/${specialite}`
     );
   }
+
+
+getMedecinDetails(id: number): Observable<any> {
+  return this.http.get(`${this.API_URL}/admin/medecins/${id}/details`);
+}
+
+deleteMedecin(id: number): Observable<any> {
+  return this.http.delete(`${this.API_URL}/admin/medecins/${id}`);
+}
+
+getMedecinById(id: number): Observable<Medecin> {
+  return this.http.get<Medecin>(`${this.API_URL}/admin/medecins/${id}`);
+}
+
 }

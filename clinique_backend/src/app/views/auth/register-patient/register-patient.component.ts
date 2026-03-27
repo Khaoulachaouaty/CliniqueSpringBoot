@@ -38,7 +38,7 @@ export class RegisterPatientComponent {
       nom: ['', [Validators.required, Validators.minLength(2)]],
       prenom: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
-      tel: ['', [Validators.pattern(/^[0-9]{10}$/)]],
+      tel: ['', [Validators.pattern(/^[0-9]{8}$/)]],
       // Étape 2: Sécurité
       dateNaissance: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(6)]],
@@ -52,7 +52,6 @@ export class RegisterPatientComponent {
     const confirmPassword = control.get('confirmPassword');
 
     if (password && confirmPassword && password.value !== confirmPassword.value) {
-      confirmPassword.setErrors({ passwordMismatch: true });
       return { passwordMismatch: true };
     }
     return null;
@@ -65,9 +64,11 @@ export class RegisterPatientComponent {
     
     step1Fields.forEach(field => {
       const control = this.registerForm.get(field);
-      if (control?.invalid) {
+      if (control) {
         control.markAsTouched();
-        valid = false;
+        if (control.invalid) {
+          valid = false;
+        }
       }
     });
 
@@ -81,8 +82,14 @@ export class RegisterPatientComponent {
   }
 
   onSubmit(): void {
+    console.log('🚀 onSubmit appelé');
+    console.log('Form valid:', this.registerForm.valid);
+    console.log('Form value:', this.registerForm.value);
+    console.log('Form errors:', this.registerForm.errors);
+
     if (this.registerForm.invalid) {
       this.markAllAsTouched();
+      this.errorMessage = 'Veuillez remplir tous les champs obligatoires.';
       return;
     }
 
@@ -92,8 +99,11 @@ export class RegisterPatientComponent {
 
     const { confirmPassword, ...data } = this.registerForm.value;
 
+    console.log('📤 Données envoyées:', data);
+
     this.authService.registerPatient(data as RegisterPatientRequest).subscribe({
       next: (response) => {
+        console.log('✅ Réponse:', response);
         this.isLoading = false;
         
         if (response.success) {
@@ -104,12 +114,13 @@ export class RegisterPatientComponent {
             this.router.navigate(['/login']);
           }, 2000);
         } else {
-          this.errorMessage = response.message;
+          this.errorMessage = response.message || 'Erreur lors de l\'inscription.';
         }
       },
       error: (err) => {
+        console.error('❌ Erreur:', err);
         this.isLoading = false;
-        this.errorMessage = 'Erreur lors de l\'inscription.';
+        this.errorMessage = err.error?.message || 'Erreur lors de l\'inscription.';
       }
     });
   }

@@ -27,22 +27,12 @@ export class CreateMedecinComponent {
   showPassword = false;
   showConfirmPassword = false;
 
-  // Liste des spécialités médicales
   specialites = [
-    'Cardiologie',
-    'Dermatologie',
-    'Endocrinologie',
-    'Gastroentérologie',
-    'Gynécologie',
-    'Neurologie',
-    'Ophtalmologie',
-    'Orthopédie',
-    'Pédiatrie',
-    'Psychiatrie',
-    'Radiologie',
-    'Rhumatologie',
-    'Urologie',
-    'Médecine générale'
+    'Cardiologie', 'Dermatologie', 'Endocrinologie', 
+    'Gastroentérologie', 'Gynécologie', 'Neurologie',
+    'Ophtalmologie', 'Orthopédie', 'Pédiatrie',
+    'Psychiatrie', 'Radiologie', 'Rhumatologie',
+    'Urologie', 'Médecine générale'
   ];
 
   constructor(
@@ -54,7 +44,7 @@ export class CreateMedecinComponent {
       nom: ['', [Validators.required, Validators.minLength(2)]],
       prenom: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
-      tel: ['', [Validators.pattern(/^[0-9]{10}$/)]],
+      tel: ['', [Validators.pattern(/^[0-9]{8}$/)]],
       specialite: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', Validators.required]
@@ -66,7 +56,6 @@ export class CreateMedecinComponent {
     const confirmPassword = control.get('confirmPassword');
 
     if (password && confirmPassword && password.value !== confirmPassword.value) {
-      confirmPassword?.setErrors({ passwordMismatch: true });
       return { passwordMismatch: true };
     }
     return null;
@@ -75,6 +64,7 @@ export class CreateMedecinComponent {
   onSubmit(): void {
     if (this.medecinForm.invalid) {
       this.markAllAsTouched();
+      this.errorMessage = 'Veuillez corriger les erreurs du formulaire.';
       return;
     }
 
@@ -89,18 +79,20 @@ export class CreateMedecinComponent {
         this.isLoading = false;
         
         if (response.success) {
-          this.successMessage = `Dr. ${data.prenom} ${data.nom} créé avec succès !`;
+          this.successMessage = `Dr. ${data.prenom} ${data.nom} créé avec succès ! Redirection...`;
           this.medecinForm.reset();
           
-          // Option: rediriger vers dashboard après 2 secondes
-          // setTimeout(() => this.router.navigate(['/admin/dashboard']), 2000);
+          // ✅ REDIRECTION VERS L'INTERFACE MEDECIN
+          setTimeout(() => {
+            this.router.navigate(['/medecin/dashboard']);
+          }, 1500);
         } else {
-          this.errorMessage = response.message;
+          this.errorMessage = response.message || 'Erreur lors de la création.';
         }
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = 'Erreur lors de la création du médecin.';
+        this.errorMessage = err.error?.message || 'Erreur lors de la création du médecin.';
         console.error(err);
       }
     });

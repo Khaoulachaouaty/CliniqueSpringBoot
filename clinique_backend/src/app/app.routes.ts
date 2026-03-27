@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
+import { MedecinListComponent } from './views/admin/medecin-list/medecin-list.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'welcome', pathMatch: 'full' },
@@ -22,7 +23,11 @@ export const routes: Routes = [
     loadComponent: () => import('./views/auth/register-patient/register-patient.component')
       .then(m => m.RegisterPatientComponent)
   },
-
+  {
+  path: 'admin/medecins',
+  component: MedecinListComponent,
+  canActivate: [authGuard]
+  },
   // 🔐 Route protégée ADMIN pour créer médecin
   {
     path: 'admin/create-medecin',
