@@ -13,10 +13,6 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  getAllPatients(): Observable<Patient[]> {
-    return this.http.get<Patient[]>(`${this.API_URL}${API_CONFIG.endpoints.admin.patients}`);
-  }
-
   getAllMedecins(): Observable<Medecin[]> {
     return this.http.get<Medecin[]>(`${this.API_URL}${API_CONFIG.endpoints.admin.medecins}`);
   }
@@ -42,6 +38,18 @@ deleteMedecin(id: number): Observable<any> {
 
 getMedecinById(id: number): Observable<Medecin> {
   return this.http.get<Medecin>(`${this.API_URL}/admin/medecins/${id}`);
+}
+
+getAllPatients(): Observable<Patient[]> {
+  return this.http.get<Patient[]>(`${this.API_URL}/admin/patients`);
+}
+
+getPatientDetails(id: number): Observable<any> {
+  return this.http.get(`${this.API_URL}/admin/patients/${id}/details`);
+}
+
+deletePatient(id: number): Observable<any> {
+  return this.http.delete(`${this.API_URL}/admin/patients/${id}`);
 }
 
 }

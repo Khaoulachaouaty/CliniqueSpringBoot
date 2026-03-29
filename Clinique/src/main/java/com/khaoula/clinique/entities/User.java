@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 public class User {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)  //mysql fait incrémentation
     private Long userId;
     
     @Column(unique = true)
