@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute } from '@angular/router';
 import { RendezVousService } from '../../../services/rendezvous.service';
 import { AuthService } from '../../../services/auth.service';
-import { Consultation, RendezVous } from '../../../models/rendezvous.model';
+import { Consultation, DossierMedicalResponse, RendezVous } from '../../../models/rendezvous.model';
 
 @Component({
   selector: 'app-dossiers-medicaux',
@@ -19,6 +19,7 @@ export class DossiersMedicauxComponent implements OnInit {
   selectedPatient: any = null;
   patientRendezVous: RendezVous[] = [];
   patientConsultations: Consultation[] = [];
+  dossierMedical: DossierMedicalResponse | null = null;
   loading = false;
   showConsultationForm = false;
   selectedRdv: RendezVous | null = null;
@@ -36,7 +37,8 @@ export class DossiersMedicauxComponent implements OnInit {
       ordonnance: [''],
       traitement: [''],
       notes: [''],
-      prix: [0, [Validators.required, Validators.min(0)]]
+      prix: [0, [Validators.required, Validators.min(0)]],
+      montantMedicaments: [0, [Validators.min(0)]]
     });
   }
 
@@ -91,6 +93,26 @@ export class DossiersMedicauxComponent implements OnInit {
                                       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       }
     });
+
+    // Charger les consultations du patient
+    this.rdvService.getConsultationsByPatient(patientId).subscribe({
+      next: (consultations: Consultation[]) => {
+        this.patientConsultations = consultations.filter(c => c.medecinId === this.currentUserId)
+                                                .sort((a, b) => new Date(b.dateConsultation || '').getTime() - new Date(a.dateConsultation || '').getTime());
+      }
+    });
+
+    // Charger le dossier médical
+    if (this.currentUserId) {
+      this.rdvService.consulterDossierMedical(patientId, this.currentUserId).subscribe({
+        next: (dossier: DossierMedicalResponse) => {
+          this.dossierMedical = dossier;
+        },
+        error: (err) => {
+          console.error('Erreur chargement dossier médical:', err);
+        }
+      });
+    }
   }
 
   startConsultation(rdvId: number): void {
@@ -109,23 +131,33 @@ export class DossiersMedicauxComponent implements OnInit {
       ordonnance: this.consultationForm.value.ordonnance,
       traitement: this.consultationForm.value.traitement,
       notes: this.consultationForm.value.notes,
-      prix: this.consultationForm.value.prix
+      prixConsultation: this.consultationForm.value.prix,
+      montantMedicaments: this.consultationForm.value.montantMedicaments || 0
     };
     
     this.rdvService.createConsultation(this.selectedRdv.id, consultationData).subscribe({
       next: (consultation: Consultation) => {
-        // Mettre à jour le statut du RDV
-        this.rdvService.updateStatus(this.selectedRdv!.id, 'TERMINE').subscribe();
-        
-        // Réinitialiser le formulaire
-        this.consultationForm.reset();
-        this.showConsultationForm = false;
-        this.selectedRdv = null;
-        
-        // Recharger l'historique
-        this.loadPatientHistory(this.selectedPatient.id);
-        
-        alert('Consultation enregistrée avec succès !');
+        // ✅ CORRECTION : Mettre à jour le statut du RDV avec medecinId
+        if (this.currentUserId) {
+          this.rdvService.updateStatus(this.selectedRdv!.id, 'TERMINE', this.currentUserId).subscribe({
+            next: () => {
+              // Réinitialiser le formulaire
+              this.consultationForm.reset();
+              this.showConsultationForm = false;
+              this.selectedRdv = null;
+              
+              // Recharger l'historique
+              if (this.selectedPatient) {
+                this.loadPatientHistory(this.selectedPatient.id);
+              }
+              
+              alert('Consultation enregistrée avec succès !');
+            },
+            error: (err) => {
+              console.error('Erreur mise à jour statut RDV:', err);
+            }
+          });
+        }
       },
       error: (err) => {
         console.error('Erreur création consultation:', err);
@@ -146,11 +178,51 @@ export class DossiersMedicauxComponent implements OnInit {
       case 'EN_ATTENTE': return 'text-warning';
       case 'ANNULE': return 'text-danger';
       case 'TERMINE': return 'text-secondary';
+      case 'NON_VENU': return 'text-muted';
       default: return 'text-info';
     }
   }
 
   canAddConsultation(rdv: RendezVous): boolean {
     return rdv.statut === 'CONFIRME';
+  }
+
+  canMarkAsNoShow(rdv: RendezVous): boolean {
+    // Peut marquer "non venu" si le RDV est confirmé et dans le passé
+    const rdvDate = new Date(rdv.date);
+    const today = new Date();
+    return rdv.statut === 'CONFIRME' && rdvDate < today;
+  }
+
+  // ✅ AJOUTÉ : Méthode markAsNoShow manquante
+  markAsNoShow(rdv: RendezVous): void {
+    if (!this.currentUserId) return;
+    
+    if (confirm(`Marquer le rendez-vous de ${rdv.patientPrenom} ${rdv.patientNom} comme "Non venu" ?`)) {
+      this.rdvService.updateStatus(rdv.id, 'NON_VENU', this.currentUserId).subscribe({
+        next: (updated) => {
+          rdv.statut = updated.statut;
+          alert('Statut mis à jour : Non venu');
+        },
+        error: (err) => {
+          console.error('Erreur mise à jour statut:', err);
+          alert('Erreur lors de la mise à jour du statut');
+        }
+      });
+    }
+  }
+
+  voirFacture(consultationId: number): void {
+    // Navigation vers la facture ou ouverture modal
+    this.rdvService.genererFacture(consultationId).subscribe({
+      next: (facture) => {
+        console.log('Facture:', facture);
+        // TODO: Afficher la facture dans un modal ou naviguer vers une page de facture
+        alert(`Facture N° ${facture.numeroFacture}\nMontant: ${facture.montantTotal} DHS\nStatut: ${facture.statutPaiement}`);
+      },
+      error: (err) => {
+        console.error('Erreur chargement facture:', err);
+      }
+    });
   }
 }

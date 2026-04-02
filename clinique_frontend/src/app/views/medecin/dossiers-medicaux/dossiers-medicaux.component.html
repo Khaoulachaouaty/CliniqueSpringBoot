@@ -1,3 +1,4 @@
+<!-- views/medecin/dossiers-medicaux/dossiers-medicaux.component.html -->
 <div class="container-fluid py-4">
   <h4 class="mb-4 text-success">
     <i class="bi bi-folder-medical me-2"></i>Dossiers Médicaux
@@ -45,6 +46,7 @@
 
     <!-- Dossier du patient sélectionné -->
     <div class="col-lg-8" *ngIf="selectedPatient && !showConsultationForm">
+      <!-- Info patient -->
       <div class="card shadow-sm mb-4">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
           <div class="d-flex align-items-center gap-3">
@@ -56,17 +58,57 @@
               <h5 class="mb-0">{{ selectedPatient.prenom }} {{ selectedPatient.nom }}</h5>
               <p class="mb-0 text-muted">
                 <i class="bi bi-envelope me-1"></i>{{ selectedPatient.email }} |
-                <i class="bi bi-telephone me-1"></i>{{ selectedPatient.tel }}
+                <i class="bi bi-telephone me-1"></i>{{ selectedPatient.tel || 'Non renseigné' }}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Historique des rendez-vous -->
+      <!-- Dossier médical -->
+      <div class="card shadow-sm mb-4" *ngIf="dossierMedical?.dossierMedical">
+        <div class="card-header bg-info text-white">
+          <h6 class="mb-0"><i class="bi bi-file-medical me-2"></i>Dossier Médical</h6>
+        </div>
+        <div class="card-body">
+          <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ dossierMedical?.dossierMedical }}</pre>
+        </div>
+      </div>
+
+      <!-- Historique des consultations -->
+      <div class="card shadow-sm mb-4" *ngIf="patientConsultations.length > 0">
+        <div class="card-header bg-white">
+          <h6 class="mb-0"><i class="bi bi-clipboard-pulse me-2"></i>Historique des Consultations</h6>
+        </div>
+        <div class="card-body">
+          <div class="timeline">
+            <div 
+              *ngFor="let consultation of patientConsultations" 
+              class="timeline-item border-start border-4 ps-3 pb-4 border-secondary">
+              
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <span class="badge bg-secondary">
+                    {{ consultation.dateConsultation | date:'dd/MM/yyyy' }}
+                  </span>
+                  <h6 class="mt-2 mb-1">Dr. {{ consultation.medecinNom }} {{ consultation.medecinPrenom }}</h6>
+                  <p class="mb-1"><strong>Diagnostic:</strong> {{ consultation.diagnostic }}</p>
+                  <p class="mb-1" *ngIf="consultation.traitement"><strong>Traitement:</strong> {{ consultation.traitement }}</p>
+                  <p class="mb-1"><strong>Montant:</strong> {{ consultation.montantTotal }} DHS</p>
+                  <button class="btn btn-sm btn-outline-primary" (click)="voirFacture(consultation.id)">
+                    <i class="bi bi-receipt me-1"></i>Voir la facture
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rendez-vous du patient -->
       <div class="card shadow-sm">
         <div class="card-header bg-white">
-          <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Historique des Consultations</h6>
+          <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Historique des Rendez-vous</h6>
         </div>
         <div class="card-body">
           <div *ngIf="patientRendezVous.length === 0" class="text-center py-4 text-muted">
@@ -81,23 +123,36 @@
               [class]="'border-start border-4 ps-3 pb-4 ' + 
                       (rdv.statut === 'TERMINE' ? 'border-secondary' : 
                        rdv.statut === 'CONFIRME' ? 'border-success' : 
-                       rdv.statut === 'ANNULE' ? 'border-danger' : 'border-warning')">
+                       rdv.statut === 'ANNULE' ? 'border-danger' : 
+                       rdv.statut === 'NON_VENU' ? 'border-muted' : 'border-warning')">
               
               <div class="d-flex justify-content-between align-items-start">
                 <div>
-                  <span class="badge" [class]="'bg-' + getRdvStatusClass(rdv.statut).replace('text-', '')">
-                    {{ rdv.statut }}
-                  </span>
-                  <h6 class="mt-2 mb-1">{{ rdv.date | date:'dd/MM/yyyy' }} à {{ rdv.heure }}</h6>
+                  <div class="d-flex gap-2 mb-2">
+                    <span class="badge" [class]="'bg-' + getRdvStatusClass(rdv.statut).replace('text-', '')">
+                      {{ rdv.statut }}
+                    </span>
+                    <span class="badge bg-light text-dark">
+                      {{ rdv.date | date:'dd/MM/yyyy' }} à {{ rdv.heure }}
+                    </span>
+                  </div>
                   <p class="mb-1"><strong>Motif:</strong> {{ rdv.motif }}</p>
                   
-                  <!-- Bouton consultation si RDV confirmé -->
-                  <button 
-                    *ngIf="canAddConsultation(rdv)"
-                    class="btn btn-sm btn-success"
-                    (click)="startConsultation(rdv.id)">
-                    <i class="bi bi-clipboard-plus me-1"></i>Ajouter Consultation
-                  </button>
+                  <!-- Actions selon le statut -->
+                  <div class="btn-group btn-group-sm" *ngIf="rdv.statut !== 'TERMINE' && rdv.statut !== 'ANNULE'">
+                    <button 
+                      *ngIf="canAddConsultation(rdv)"
+                      class="btn btn-success"
+                      (click)="startConsultation(rdv.id)">
+                      <i class="bi bi-clipboard-plus me-1"></i>Consultation
+                    </button>
+                    <button 
+                      *ngIf="canMarkAsNoShow(rdv)"
+                      class="btn btn-outline-secondary"
+                      (click)="markAsNoShow(rdv)">
+                      <i class="bi bi-person-x me-1"></i>Non venu
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -165,16 +220,27 @@
                 placeholder="Notes additionnelles..."></textarea>
             </div>
             
-            <div class="mb-4">
-              <label class="form-label">Prix de la consultation (DHS) *</label>
-              <input 
-                type="number" 
-                class="form-control" 
-                formControlName="prix"
-                placeholder="0.00">
-              <div *ngIf="consultationForm.get('prix')?.invalid && consultationForm.get('prix')?.touched" 
-                   class="text-danger small">
-                Prix valide requis
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Prix consultation (DHS) *</label>
+                <input 
+                  type="number" 
+                  class="form-control" 
+                  formControlName="prix"
+                  placeholder="0.00">
+                <div *ngIf="consultationForm.get('prix')?.invalid && consultationForm.get('prix')?.touched" 
+                     class="text-danger small">
+                  Prix valide requis
+                </div>
+              </div>
+              
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Montant médicaments (DHS)</label>
+                <input 
+                  type="number" 
+                  class="form-control" 
+                  formControlName="montantMedicaments"
+                  placeholder="0.00">
               </div>
             </div>
             

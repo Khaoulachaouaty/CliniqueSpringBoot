@@ -19,7 +19,18 @@ export const API_CONFIG = {
       base: '/rendezvous',
       creneaux: '/rendezvous/creneaux'
     },
-    // 🔥 AJOUTÉ : Notifications
+    consultations: {
+      base: '/consultations',
+      byMedecin: (id: number) => `/consultations/medecin/${id}`,
+      byPatient: (id: number) => `/consultations/patient/${id}`,
+      facture: (id: number) => `/consultations/${id}/facture`,
+      facturePDF: (id: number) => `/consultations/${id}/facture/pdf`,
+      paiement: (id: number) => `/consultations/${id}/paiement`,
+      statistiques: (id: number) => `/consultations/medecin/${id}/statistiques`
+    },
+    dossiersMedicaux: {
+      consulter: (patientId: number) => `/dossiers-medicaux/patient/${patientId}`
+    },
     notifications: {
       base: '/notifications',
       patient: (id: number) => `/notifications/patient/${id}`,

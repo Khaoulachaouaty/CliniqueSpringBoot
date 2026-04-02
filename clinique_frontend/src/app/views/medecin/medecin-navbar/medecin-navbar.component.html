@@ -1,7 +1,7 @@
 <nav class="medecin-navbar navbar navbar-expand-lg sticky-top">
   <div class="container">
     <!-- Logo -->
-    <a class="navbar-brand d-flex align-items-center gap-2" href="javascript:void(0)" (click)="navigateTo('/medecin/dashboard')">
+    <a class="navbar-brand d-flex align-items-center gap-2" routerLink="/medecin/dashboard">
       <div class="nav-icon text-white d-flex align-items-center justify-content-center">
         <i class="bi bi-stethoscope fs-4"></i>
       </div>
@@ -11,17 +11,38 @@
       </div>
     </a>
 
+    <!-- Toggle Button -->
+    <button class="navbar-toggler" type="button" (click)="toggleMenu()">
+      <i class="bi" [class.bi-list]="!isMenuOpen" [class.bi-x-lg]="isMenuOpen"></i>
+    </button>
+
     <!-- Menu -->
     <div class="collapse navbar-collapse" [class.show]="isMenuOpen">
       <ul class="navbar-nav mx-auto align-items-center gap-1">
         <li class="nav-item">
-          <a class="nav-link" href="javascript:void(0)" (click)="navigateTo('/medecin/dashboard')">Mon Espace Santé</a>
+          <a class="nav-link" href="javascript:void(0)" (click)="navigateTo('/medecin/dashboard')">
+            <i class="bi bi-speedometer2"></i> Dashboard
+          </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="javascript:void(0)" (click)="navigateTo('/medecin/rendezvous')">Mes Rendez-vous</a>
+          <a class="nav-link" href="javascript:void(0)" (click)="navigateTo('/medecin/rendezvous')">
+            <i class="bi bi-calendar-check"></i> Mes Rendez-vous
+          </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="javascript:void(0)" (click)="navigateTo('/medecin/notifications')">Notifications</a>
+          <a class="nav-link" href="javascript:void(0)" (click)="navigateTo('/medecin/calendrier')">
+            <i class="bi bi-calendar3"></i> Calendrier
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0)" (click)="navigateTo('/medecin/patients')">
+            <i class="bi bi-people"></i> Mes Patients
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0)" (click)="navigateTo('/medecin/dossiers')">
+            <i class="bi bi-folder-medical"></i> Dossiers Médicaux
+          </a>
         </li>
       </ul>
 
@@ -50,9 +71,6 @@
                 <button class="btn-action btn-mark-all" (click)="markAllAsRead($event)" *ngIf="unreadCount > 0" title="Tout marquer comme lu">
                   <i class="bi bi-check2-all"></i>
                 </button>
-                <button class="btn-action btn-settings" (click)="goToSettings($event)" title="Paramètres">
-                  <i class="bi bi-gear"></i>
-                </button>
               </div>
             </div>
 
@@ -61,7 +79,7 @@
                    [class.unread]="notif.statut === 'NON_LUE'"
                    (click)="onNotificationClick(notif)">
                 <div class="notification-icon" [class]="'type-' + (notif.type | lowercase)">
-                  <i class="bi" [ngClass]="getNotificationIcon(notif.type)"></i>
+                  <i class="bi" [class]="getNotificationIcon(notif.type)"></i>
                 </div>
                 <div class="notification-content">
                   <p class="notification-text">{{ notif.message }}</p>
@@ -79,7 +97,6 @@
               <div class="notification-empty">
                 <i class="bi bi-bell-slash"></i>
                 <p>Aucune notification</p>
-                <small>Vous n'avez pas de nouvelles notifications</small>
               </div>
             </ng-template>
 

@@ -28,19 +28,21 @@ export class PrendreRdvComponent implements OnInit {
   rechercheMedecin = '';
   
   medecinSelectionne: Medecin | null = null;
-  dateSelectionnee = '';
+  dateSelectionnee = ''; // 🔥 vide par défaut pour afficher le message
   creneauSelectionne = '';
   creneauxDisponibles: string[] = [];
   creneauxOccupes: string[] = [];
   
-  // 🔥 ÉTATS DE CHARGEMENT SÉPARÉS
+  // États de chargement
   loadingCreneaux = false;
   loadingOccupes = false;
   isLoading = false;
   
   errorMessage = '';
-  dateMin = new Date().toISOString().split('T')[0];
-  
+
+  // Interdire le jour courant : dateMin = demain
+  dateMin: string = '';
+
   rdvForm: FormGroup;
 
   constructor(
@@ -53,6 +55,17 @@ export class PrendreRdvComponent implements OnInit {
     this.rdvForm = this.fb.group({
       motif: ['', [Validators.required, Validators.minLength(5)]]
     });
+
+    // 🔥 Calcul de demain pour dateMin
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const yyyy = tomorrow.getFullYear();
+    const mm = ('0' + (tomorrow.getMonth() + 1)).slice(-2);
+    const dd = ('0' + tomorrow.getDate()).slice(-2);
+
+    this.dateMin = `${yyyy}-${mm}-${dd}`;
   }
 
   ngOnInit(): void {
@@ -90,28 +103,24 @@ export class PrendreRdvComponent implements OnInit {
 
   selectionnerMedecin(medecin: Medecin): void {
     this.medecinSelectionne = medecin;
-    // Réinitialiser la date et les créneaux si on change de médecin
-    this.dateSelectionnee = '';
     this.creneauSelectionne = '';
     this.creneauxDisponibles = [];
     this.creneauxOccupes = [];
+    this.dateSelectionnee = ''; // 🔥 vide pour afficher le message
   }
 
   onDateChange(): void {
     if (!this.dateSelectionnee || !this.medecinSelectionne) return;
-    
-    // 🔥 BLOQUER L'AFFICHAGE JUSQU'À CE QUE TOUS LES DONNÉES SOIENT CHARGÉES
+
     this.loadingCreneaux = true;
     this.loadingOccupes = true;
     this.creneauSelectionne = '';
     this.creneauxOccupes = [];
-    
-    // Charger d'abord les créneaux disponibles
+
     this.rdvService.getCreneauxDisponibles(this.medecinSelectionne.id, this.dateSelectionnee)
       .subscribe({
         next: (creneaux) => {
           this.creneauxDisponibles = creneaux;
-          // Puis charger les créneaux occupés
           this.loadCreneauxOccupes();
         },
         error: () => {
@@ -128,18 +137,13 @@ export class PrendreRdvComponent implements OnInit {
       this.loadingOccupes = false;
       return;
     }
-    
+
     this.rdvService.getCreneauxOccupes(this.medecinSelectionne.id, this.dateSelectionnee)
       .subscribe({
         next: (occupes) => {
           this.creneauxOccupes = occupes;
-          // 🔥 NE PAS AFFICHER AVANT D'AVOIR LES DEUX LISTES
           this.loadingCreneaux = false;
           this.loadingOccupes = false;
-          console.log('✅ Créneaux chargés:', { 
-            disponibles: this.creneauxDisponibles.length, 
-            occupes: this.creneauxOccupes.length 
-          });
         },
         error: () => {
           this.loadingCreneaux = false;
@@ -155,12 +159,11 @@ export class PrendreRdvComponent implements OnInit {
 
   selectionnerCreneau(creneau: string): void {
     if (this.isCreneauOccupe(creneau)) {
-      // 🔥 DOUBLE VÉRIFICATION - NE DEVRAIT JAMAIS ARRIVER AVEC LA CORRECTION
       this.errorMessage = 'Ce créneau est déjà réservé. Veuillez en choisir un autre.';
       return;
     }
     this.creneauSelectionne = creneau;
-    this.errorMessage = ''; // Effacer les erreurs précédentes
+    this.errorMessage = '';
   }
 
   confirmerRdv(): void {
@@ -169,10 +172,8 @@ export class PrendreRdvComponent implements OnInit {
       return;
     }
 
-    // 🔥 VÉRIFICATION FINALE AVANT ENVOI
     if (this.isCreneauOccupe(this.creneauSelectionne)) {
       this.errorMessage = 'Ce créneau vient d\'être réservé par un autre patient. Veuillez en choisir un autre.';
-      // Rafraîchir les créneaux
       this.onDateChange();
       return;
     }
@@ -188,7 +189,7 @@ export class PrendreRdvComponent implements OnInit {
     }
 
     const request: RendezVousRequest = {
-      patientId: patientId,
+      patientId,
       medecinId: this.medecinSelectionne.id,
       date: this.dateSelectionnee,
       heure: this.creneauSelectionne,
@@ -198,12 +199,11 @@ export class PrendreRdvComponent implements OnInit {
     this.rdvService.createRendezVous(request).subscribe({
       next: () => {
         this.isLoading = false;
-        this.etape = 4; // Succès
+        this.etape = 4;
       },
       error: (err) => {
         this.isLoading = false;
         this.errorMessage = err.error?.message || 'Erreur lors de la création du rendez-vous. Veuillez réessayer.';
-        // Si erreur de créneau occupé, rafraîchir
         if (err.error?.message?.includes('déjà réservé')) {
           this.onDateChange();
         }
@@ -239,7 +239,6 @@ export class PrendreRdvComponent implements OnInit {
     this.creneauSelectionne = '';
   }
 
-  // 🔥 GETTERS UTILES POUR LE TEMPLATE
   get creneauxLibres(): number {
     return this.creneauxDisponibles.length - this.creneauxOccupes.length;
   }

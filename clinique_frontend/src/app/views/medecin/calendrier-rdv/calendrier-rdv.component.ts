@@ -109,23 +109,41 @@ export class CalendrierRdvComponent implements OnInit {
     return date.getMonth() === this.currentMonth.getMonth();
   }
 
-  confirmRdv(rdv: RendezVous): void {
-    this.rdvService.updateStatus(rdv.id, 'CONFIRME').subscribe({
-      next: (updated: RendezVous) => {
-        rdv.statut = updated.statut;
-      },
-      error: (err) => console.error('Erreur confirmation:', err)
-    });
-  }
 
-  cancelRdv(rdv: RendezVous): void {
-    this.rdvService.updateStatus(rdv.id, 'ANNULE').subscribe({
-      next: (updated: RendezVous) => {
-        rdv.statut = updated.statut;
-      },
-      error: (err) => console.error('Erreur annulation:', err)
-    });
-  }
+
+confirmRdv(rdv: RendezVous): void {
+  const medecinId = this.authService.getCurrentUserId();
+  if (!medecinId) return;
+  
+  this.rdvService.updateStatus(rdv.id, 'CONFIRME', medecinId).subscribe({
+    next: (updated) => { 
+      rdv.statut = updated.statut;
+      // 🔄 Recharger la liste pour voir le changement
+      this.loadRendezVous();
+    },
+    error: (err) => {
+      console.error('Erreur confirmation:', err);
+      alert('Erreur lors de la confirmation du rendez-vous');
+    }
+  });
+}
+
+cancelRdv(rdv: RendezVous): void {
+  const medecinId = this.authService.getCurrentUserId();
+  if (!medecinId) return;
+  
+  this.rdvService.updateStatus(rdv.id, 'ANNULE', medecinId).subscribe({
+    next: (updated) => { 
+      rdv.statut = updated.statut;
+      // 🔄 Recharger la liste
+      this.loadRendezVous();
+    },
+    error: (err) => {
+      console.error('Erreur annulation:', err);
+      alert('Erreur lors de l\'annulation du rendez-vous');
+    }
+  });
+}
 
   completeRdv(rdv: RendezVous): void {
     this.selectedRdv = rdv;

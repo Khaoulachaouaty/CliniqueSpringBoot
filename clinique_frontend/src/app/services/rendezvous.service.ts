@@ -1,4 +1,4 @@
-// services/rendezvous.service.ts - VERSION NETTOYÉE
+// services/rendezvous.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -7,7 +7,9 @@ import {
   RendezVous, 
   RendezVousRequest,
   CalendarEvent,
-  Consultation
+  Consultation,
+  DossierMedicalResponse,
+  FactureResponse
 } from '../models/rendezvous.model';
 
 @Injectable({
@@ -18,10 +20,18 @@ export class RendezVousService {
 
   constructor(private http: HttpClient) {}
 
-  // ==================== PATIENT ====================
+  // ============================================
+  // PATIENT
+  // ============================================
   
   createRendezVous(request: RendezVousRequest): Observable<RendezVous> {
     return this.http.post<RendezVous>(`${this.API_URL}/rendezvous`, request);
+  }
+
+  modifierRendezVous(rendezVousId: number, request: RendezVousRequest, patientId: number): Observable<RendezVous> {
+    return this.http.put<RendezVous>(`${this.API_URL}/rendezvous/${rendezVousId}`, request, {
+      params: { patientId: patientId.toString() }
+    });
   }
 
   getRendezVousByPatient(patientId: number): Observable<RendezVous[]> {
@@ -34,7 +44,9 @@ export class RendezVousService {
     });
   }
 
-  // ==================== MEDECIN ====================
+  // ============================================
+  // MÉDECIN
+  // ============================================
   
   getRendezVousByMedecin(medecinId: number): Observable<RendezVous[]> {
     return this.http.get<RendezVous[]>(`${this.API_URL}/rendezvous/medecin/${medecinId}`);
@@ -46,9 +58,28 @@ export class RendezVousService {
     });
   }
 
-  updateStatus(rendezVousId: number, statut: string): Observable<RendezVous> {
-    return this.http.put<RendezVous>(`${this.API_URL}/rendezvous/${rendezVousId}/status`, { statut });
-  }
+updateStatus(rendezVousId: number, statut: string, medecinId: number): Observable<RendezVous> {
+  const url = `${this.API_URL}/rendezvous/${rendezVousId}/status`;
+  
+  console.log('🔍 updateStatus appelé:', { 
+    url, 
+    rendezVousId, 
+    statut, 
+    medecinId,
+    body: { statut }
+  });
+
+  return this.http.put<RendezVous>(
+    url,
+    { statut },  // Body avec "statut"
+    { 
+      params: { medecinId: medecinId.toString() }  // Query param
+    }
+  );
+}
+
+// ❌ SUPPRIMER updateStatusWithReason complètement
+
 
   getCalendarEvents(medecinId: number, start: string, end: string): Observable<CalendarEvent[]> {
     return this.http.get<CalendarEvent[]>(`${this.API_URL}/rendezvous/medecin/${medecinId}/calendar`, {
@@ -56,7 +87,9 @@ export class RendezVousService {
     });
   }
 
-  // ==================== CRÉNEAUX ====================
+  // ============================================
+  // CRÉNEAUX
+  // ============================================
   
   getCreneauxDisponibles(medecinId: number, date: string): Observable<string[]> {
     return this.http.get<string[]>(`${this.API_URL}/rendezvous/creneaux/${medecinId}`, {
@@ -70,7 +103,9 @@ export class RendezVousService {
     });
   }
 
-  // ==================== ADMIN ====================
+  // ============================================
+  // ADMIN
+  // ============================================
   
   getAllRendezVous(): Observable<RendezVous[]> {
     return this.http.get<RendezVous[]>(`${this.API_URL}/rendezvous`);
@@ -90,7 +125,9 @@ export class RendezVousService {
     });
   }
 
-  // ==================== CONSULTATIONS ====================
+  // ============================================
+  // CONSULTATIONS
+  // ============================================
   
   createConsultation(rendezVousId: number, consultation: Partial<Consultation>): Observable<Consultation> {
     return this.http.post<Consultation>(`${this.API_URL}/consultations`, {
@@ -99,7 +136,57 @@ export class RendezVousService {
     });
   }
 
+  getConsultationById(id: number): Observable<Consultation> {
+    return this.http.get<Consultation>(`${this.API_URL}/consultations/${id}`);
+  }
+
   getConsultationByRendezVous(rendezVousId: number): Observable<Consultation> {
     return this.http.get<Consultation>(`${this.API_URL}/consultations/rendezvous/${rendezVousId}`);
+  }
+
+  getConsultationsByMedecin(medecinId: number): Observable<Consultation[]> {
+    return this.http.get<Consultation[]>(`${this.API_URL}/consultations/medecin/${medecinId}`);
+  }
+
+  getConsultationsByPatient(patientId: number): Observable<Consultation[]> {
+    return this.http.get<Consultation[]>(`${this.API_URL}/consultations/patient/${patientId}`);
+  }
+
+  // ============================================
+  // FACTURATION
+  // ============================================
+  
+  genererFacture(consultationId: number): Observable<FactureResponse> {
+    return this.http.get<FactureResponse>(`${this.API_URL}/consultations/${consultationId}/facture`);
+  }
+
+  genererFacturePDF(consultationId: number): Observable<FactureResponse> {
+    return this.http.get<FactureResponse>(`${this.API_URL}/consultations/${consultationId}/facture/pdf`);
+  }
+
+  getFacturesByPatient(patientId: number): Observable<FactureResponse[]> {
+    return this.http.get<FactureResponse[]>(`${this.API_URL}/consultations/patient/${patientId}/factures`);
+  }
+
+  updateStatutPaiement(consultationId: number, statut: string): Observable<FactureResponse> {
+    return this.http.put<FactureResponse>(`${this.API_URL}/consultations/${consultationId}/paiement`, null, {
+      params: { statut }
+    });
+  }
+
+  getStatistiquesFacturation(medecinId: number, debut: string, fin: string): Observable<any> {
+    return this.http.get(`${this.API_URL}/consultations/medecin/${medecinId}/statistiques`, {
+      params: { debut, fin }
+    });
+  }
+
+  // ============================================
+  // DOSSIER MÉDICAL
+  // ============================================
+  
+  consulterDossierMedical(patientId: number, medecinId: number): Observable<DossierMedicalResponse> {
+    return this.http.get<DossierMedicalResponse>(`${this.API_URL}/dossiers-medicaux/patient/${patientId}`, {
+      params: { medecinId: medecinId.toString() }
+    });
   }
 }

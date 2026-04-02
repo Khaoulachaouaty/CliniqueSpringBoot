@@ -1,7 +1,7 @@
 // src/app/views/medecin/medecin-navbar/medecin-navbar.component.ts
 import { Component, ElementRef, HostListener, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NotificationService } from '../../../services/notification.service';
 import { AuthService } from '../../../services/auth.service';
 import { NotificationResponse, NotificationStatut, NotificationType } from '../../../models/notification.model';
@@ -11,7 +11,7 @@ import { takeUntil } from 'rxjs/operators';
 @Component({
   selector: 'app-medecin-navbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './medecin-navbar.component.html',
   styleUrls: ['./medecin-navbar.component.css']
 })
@@ -34,10 +34,11 @@ export class MedecinNavbarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.currentUserId = this.authService.getMedecinId(); // méthode pour récupérer l'id du médecin
+    this.currentUserId = this.authService.getMedecinId();
     if (this.currentUserId) {
       this.loadNotifications();
 
+      // Polling toutes les 30 secondes
       interval(30000)
         .pipe(takeUntil(this.destroy$))
         .subscribe(() => this.loadNotifications());
@@ -61,6 +62,10 @@ export class MedecinNavbarComponent implements OnInit, OnDestroy {
       next: notifs => this.notifications = notifs.slice(0, 5),
       error: err => console.error('Erreur chargement notifications:', err)
     });
+  }
+
+  toggleMenu(): void {
+    this.isMenuOpen = !this.isMenuOpen;
   }
 
   toggleNotifications(event: Event): void {
@@ -105,7 +110,7 @@ export class MedecinNavbarComponent implements OnInit, OnDestroy {
         break;
       case NotificationType.FACTURE:
       case NotificationType.PAIEMENT_RECU:
-        this.router.navigate(['/medecin/factures']);
+        this.router.navigate(['/medecin/dashboard']);
         break;
       default:
         this.router.navigate(['/medecin/notifications']);

@@ -3,8 +3,6 @@ import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
 import { medecinGuard } from './guards/medecin.guard';
 import { patientGuard } from './guards/patient.guard';
-import { MedecinListComponent } from './views/admin/medecin-list/medecin-list.component';
-import { PatientListComponent } from './views/admin/patient-list/patient-list.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'welcome', pathMatch: 'full' },
@@ -40,11 +38,13 @@ export const routes: Routes = [
       },
       {
         path: 'medecins',
-        component: MedecinListComponent
+        loadComponent: () => import('./views/admin/medecin-list/medecin-list.component')
+          .then(m => m.MedecinListComponent)
       },
       {
         path: 'patients',
-        component: PatientListComponent
+        loadComponent: () => import('./views/admin/patient-list/patient-list.component')
+          .then(m => m.PatientListComponent)
       },
       {
         path: 'create-medecin',
@@ -71,10 +71,14 @@ export const routes: Routes = [
       },
       {
         path: 'rendezvous',
+        loadComponent: () => import('./views/medecin/rendezvous-list/rendezvous-list.component')
+          .then(m => m.RendezvousListComponent)
+      },
+      {
+        path: 'calendrier',
         loadComponent: () => import('./views/medecin/calendrier-rdv/calendrier-rdv.component')
           .then(m => m.CalendrierRdvComponent)
       },
-      // 🔥 SUPPRIMÉ : disponibilites (plus d'entité Disponibilite)
       {
         path: 'patients',
         loadComponent: () => import('./views/medecin/mes-patients/mes-patients.component')
