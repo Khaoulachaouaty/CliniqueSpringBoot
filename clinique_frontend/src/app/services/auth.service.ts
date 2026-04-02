@@ -1,3 +1,5 @@
+// services/auth.service.ts
+
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, catchError, of, tap } from 'rxjs';
@@ -21,7 +23,7 @@ export class AuthService {
   private _userRole = signal<string | null>(localStorage.getItem('userRole'));
   private _isLoggedIn = signal<boolean>(!!localStorage.getItem('currentUser'));
 
-  // Signaux publics en lecture seule (computed pour la réactivité)
+  // Signaux publics en lecture seule
   currentUser = computed(() => this._currentUser());
   userRole = computed(() => this._userRole());
   isLoggedIn = computed(() => this._isLoggedIn());
@@ -60,12 +62,15 @@ export class AuthService {
             };
           }
 
+          // 🔥 CONSTRUIRE L'USER AVEC LES IDs SPÉCIFIQUES
           const user: User = {
             email: response.email || credentials.email,
             userId: response.userId,
             nom: response.nomComplet?.split(' ').slice(1).join(' '),
             prenom: response.nomComplet?.split(' ')[0],
-            roles: roles
+            roles: roles,
+            patientId: response.patientId,  // 🔥 AJOUTÉ
+            medecinId: response.medecinId   // 🔥 AJOUTÉ
           };
 
           this.saveUser(user, role);
@@ -88,6 +93,50 @@ export class AuthService {
         })
       );
   }
+
+// auth.service.ts - CORRECTION
+
+// 🔥 CORRIGÉ : Utiliser ?? (nullish coalescing) et vérifier undefined
+getPatientId(): number | null {
+  const patientId = this._currentUser()?.patientId;
+  console.log('🔍 getPatientId - raw value:', patientId);
+  console.log('🔍 getPatientId - type:', typeof patientId);
+  
+  // 🔥 IMPORTANT : 0 est valide, donc on vérifie seulement null/undefined
+  if (patientId === null || patientId === undefined) {
+    return null;
+  }
+  return patientId;
+}
+
+getMedecinId(): number | null {
+  const medecinId = this._currentUser()?.medecinId;
+  if (medecinId === null || medecinId === undefined) {
+    return null;
+  }
+  return medecinId;
+}
+
+getEffectiveId(): number | null {
+  const user = this._currentUser();
+  if (!user) return null;
+  
+  const role = this._userRole()?.toUpperCase();
+  
+  // Essayer d'abord les IDs spécifiques
+  if (role === 'PATIENT') {
+    const pid = this.getPatientId();
+    if (pid !== null) return pid;
+  }
+  
+  if (role === 'MEDECIN') {
+    const mid = this.getMedecinId();
+    if (mid !== null) return mid;
+  }
+  
+  // Fallback sur userId
+  return user.userId ?? null;
+}
 
   registerPatient(data: RegisterPatientRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(
@@ -117,15 +166,27 @@ export class AuthService {
     this._userRole.set(role);
     this._currentUser.set(user);
     this._isLoggedIn.set(true);
-    console.log('💾 Sauvegardé:', { user, role });
+    console.log('💾 User sauvegardé:', user);
+    console.log('🎯 PatientId:', user.patientId, '| MedecinId:', user.medecinId);
   }
 
   private getUserFromStorage(): User | null {
     const stored = localStorage.getItem('currentUser');
-    return stored ? JSON.parse(stored) : null;
+    if (!stored) return null;
+    
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return null;
+    }
   }
 
   getCurrentRole(): string | null {
     return this._userRole();
+  }
+
+  getCurrentUserId(): number | null {
+    const user = this._currentUser();
+    return user?.userId || null;
   }
 }

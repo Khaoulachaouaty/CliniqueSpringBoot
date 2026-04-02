@@ -1,18 +1,18 @@
+// views/admin/admin-navbar/admin-navbar.component.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-admin-navbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule], // 🔥 Retirer RouterLink et RouterLinkActive
   templateUrl: './admin-navbar.component.html',
   styleUrls: ['./admin-navbar.component.css']
 })
 export class AdminNavbarComponent {
   isMenuOpen = false;
-  isDropdownOpen = false;
 
   constructor(public authService: AuthService, private router: Router) {}
 

@@ -1,1 +1,97 @@
-<p>dashboard works!</p>
+<div class="container-fluid py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="text-success mb-0">
+      <i class="bi bi-heart-pulse me-2"></i>Espace Médecin
+    </h4>
+    <span class="text-muted">
+      {{ authService.currentUser()?.prenom }} {{ authService.currentUser()?.nom }}
+    </span>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-4">
+      <div class="card bg-success text-white shadow-sm" (click)="navigateTo('/medecin/rendezvous')" style="cursor: pointer;">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-0">RDV Aujourd'hui</h6>
+              <h3 class="mb-0">{{ todayRdv.length }}</h3>
+            </div>
+            <i class="bi bi-calendar-check fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card bg-info text-white shadow-sm" (click)="navigateTo('/medecin/patients')" style="cursor: pointer;">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-0">Mes Patients</h6>
+              <h3 class="mb-0">{{ totalPatients }}</h3>
+            </div>
+            <i class="bi bi-people fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card bg-warning text-dark shadow-sm" (click)="navigateTo('/medecin/rendezvous')" style="cursor: pointer;">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6 class="mb-0">En Attente</h6>
+              <h3 class="mb-0">{{ pendingRdv }}</h3>
+            </div>
+            <i class="bi bi-hourglass-split fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RDV du jour -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="bi bi-calendar-day me-2"></i>Rendez-vous du jour</h5>
+      <button class="btn btn-sm btn-success" (click)="navigateTo('/medecin/rendezvous')">
+        Voir tout <i class="bi bi-arrow-right ms-1"></i>
+      </button>
+    </div>
+    <div class="card-body">
+      <div *ngIf="loading" class="text-center py-4">
+        <div class="spinner-border text-success"></div>
+      </div>
+      
+      <div *ngIf="!loading && todayRdv.length === 0" class="text-center py-4 text-muted">
+        <i class="bi bi-calendar-x fs-1"></i>
+        <p class="mt-2">Aucun rendez-vous aujourd'hui</p>
+      </div>
+      
+      <div class="list-group" *ngIf="!loading && todayRdv.length > 0">
+        <div *ngFor="let rdv of todayRdv" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center"
+                 style="width: 50px; height: 50px; font-size: 1.2rem;">
+              {{ rdv.patientPrenom.charAt(0) }}{{ rdv.patientNom.charAt(0) }}
+            </div>
+            <div>
+              <h6 class="mb-0">{{ rdv.patientPrenom }} {{ rdv.patientNom }}</h6>
+              <p class="mb-0 text-muted">
+                <i class="bi bi-clock me-1"></i>{{ rdv.heure }} | 
+                <i class="bi bi-chat-left-text me-1"></i>{{ rdv.motif }}
+              </p>
+            </div>
+          </div>
+          <span class="badge" [class]="getStatusClass(rdv.statut)">
+            {{ getStatusLabel(rdv.statut) }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

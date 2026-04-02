@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,6 +17,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Notification {
     
     @Id
@@ -24,15 +26,22 @@ public class Notification {
     
     private String message;
     private Date dateEnvoi;
-    private String type;
-    private String statut;
-    private String destinataire;
+    private Date dateLecture;
+    private String type; // RAPPEL_RDV, CONFIRMATION_RDV, ANNULATION_RDV, FACTURE, SYSTEME
+    private String statut; // NON_LUE, LUE, ENVOYEE
     
     @ManyToOne
     @JoinColumn(name = "patient_id")
     private Patient patient;
     
     @ManyToOne
+    @JoinColumn(name = "medecin_id")
+    private Medecin medecin;
+    
+    @ManyToOne
     @JoinColumn(name = "rendez_vous_id")
     private RendezVous rendezVous;
+    
+    // Données supplémentaires selon le type
+    private String donnees; // JSON pour données flexibles
 }

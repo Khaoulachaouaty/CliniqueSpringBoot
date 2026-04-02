@@ -30,9 +30,6 @@ public class Medecin {
     @JoinColumn(name = "user_id")
     private User user;
     
-    @OneToMany(mappedBy = "medecin", cascade = CascadeType.ALL)
-    private List<Disponibilite> disponibilites;
-    
     @OneToMany(mappedBy = "medecin")
     private List<RendezVous> rendezVous;
     

@@ -1,0 +1,200 @@
+<div class="container-fluid py-4">
+  <h4 class="mb-4 text-success">
+    <i class="bi bi-folder-medical me-2"></i>Dossiers Médicaux
+  </h4>
+
+  <div class="row">
+    <!-- Liste des patients -->
+    <div class="col-lg-4" *ngIf="!showConsultationForm">
+      <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+          <h6 class="mb-0"><i class="bi bi-people me-2"></i>Mes Patients</h6>
+        </div>
+        <div class="card-body p-0">
+          <div *ngIf="loading" class="text-center py-4">
+            <div class="spinner-border text-success"></div>
+          </div>
+          
+          <div *ngIf="!loading && patients.length === 0" class="text-center py-4 text-muted">
+            <i class="bi bi-inbox fs-1"></i>
+            <p class="mt-2">Aucun patient</p>
+          </div>
+          
+          <div class="list-group list-group-flush" *ngIf="!loading && patients.length > 0">
+            <button 
+              *ngFor="let patient of patients"
+              class="list-group-item list-group-item-action"
+              [class.active]="selectedPatient?.id === patient.id"
+              (click)="selectPatient(patient)">
+              
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center"
+                     style="width: 45px; height: 45px; font-size: 1.1rem;">
+                  {{ patient.prenom.charAt(0) }}{{ patient.nom.charAt(0) }}
+                </div>
+                <div class="text-start">
+                  <h6 class="mb-0">{{ patient.prenom }} {{ patient.nom }}</h6>
+                  <small class="text-muted">{{ patient.email }}</small>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dossier du patient sélectionné -->
+    <div class="col-lg-8" *ngIf="selectedPatient && !showConsultationForm">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center"
+                 style="width: 60px; height: 60px; font-size: 1.3rem;">
+              {{ selectedPatient.prenom.charAt(0) }}{{ selectedPatient.nom.charAt(0) }}
+            </div>
+            <div>
+              <h5 class="mb-0">{{ selectedPatient.prenom }} {{ selectedPatient.nom }}</h5>
+              <p class="mb-0 text-muted">
+                <i class="bi bi-envelope me-1"></i>{{ selectedPatient.email }} |
+                <i class="bi bi-telephone me-1"></i>{{ selectedPatient.tel }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historique des rendez-vous -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Historique des Consultations</h6>
+        </div>
+        <div class="card-body">
+          <div *ngIf="patientRendezVous.length === 0" class="text-center py-4 text-muted">
+            <i class="bi bi-calendar-x fs-1"></i>
+            <p class="mt-2">Aucun rendez-vous</p>
+          </div>
+          
+          <div class="timeline" *ngIf="patientRendezVous.length > 0">
+            <div 
+              *ngFor="let rdv of patientRendezVous" 
+              class="timeline-item"
+              [class]="'border-start border-4 ps-3 pb-4 ' + 
+                      (rdv.statut === 'TERMINE' ? 'border-secondary' : 
+                       rdv.statut === 'CONFIRME' ? 'border-success' : 
+                       rdv.statut === 'ANNULE' ? 'border-danger' : 'border-warning')">
+              
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <span class="badge" [class]="'bg-' + getRdvStatusClass(rdv.statut).replace('text-', '')">
+                    {{ rdv.statut }}
+                  </span>
+                  <h6 class="mt-2 mb-1">{{ rdv.date | date:'dd/MM/yyyy' }} à {{ rdv.heure }}</h6>
+                  <p class="mb-1"><strong>Motif:</strong> {{ rdv.motif }}</p>
+                  
+                  <!-- Bouton consultation si RDV confirmé -->
+                  <button 
+                    *ngIf="canAddConsultation(rdv)"
+                    class="btn btn-sm btn-success"
+                    (click)="startConsultation(rdv.id)">
+                    <i class="bi bi-clipboard-plus me-1"></i>Ajouter Consultation
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulaire de consultation -->
+    <div class="col-lg-8" *ngIf="showConsultationForm && selectedRdv">
+      <div class="card shadow-sm">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">
+            <i class="bi bi-clipboard-plus me-2"></i>Nouvelle Consultation
+          </h6>
+          <button class="btn btn-sm btn-light" (click)="cancelConsultation()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-info mb-4">
+            <strong>Patient:</strong> {{ selectedRdv.patientPrenom }} {{ selectedRdv.patientNom }}<br>
+            <strong>Date RDV:</strong> {{ selectedRdv.date | date:'dd/MM/yyyy' }} à {{ selectedRdv.heure }}<br>
+            <strong>Motif:</strong> {{ selectedRdv.motif }}
+          </div>
+          
+          <form [formGroup]="consultationForm" (ngSubmit)="submitConsultation()">
+            <div class="mb-3">
+              <label class="form-label">Diagnostic *</label>
+              <textarea 
+                class="form-control" 
+                formControlName="diagnostic" 
+                rows="3"
+                placeholder="Entrez le diagnostic..."></textarea>
+              <div *ngIf="consultationForm.get('diagnostic')?.invalid && consultationForm.get('diagnostic')?.touched" 
+                   class="text-danger small">
+                Le diagnostic est requis
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Ordonnance</label>
+              <textarea 
+                class="form-control" 
+                formControlName="ordonnance" 
+                rows="3"
+                placeholder="Médicaments prescrits..."></textarea>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Traitement</label>
+              <textarea 
+                class="form-control" 
+                formControlName="traitement" 
+                rows="2"
+                placeholder="Instructions de traitement..."></textarea>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Notes complémentaires</label>
+              <textarea 
+                class="form-control" 
+                formControlName="notes" 
+                rows="2"
+                placeholder="Notes additionnelles..."></textarea>
+            </div>
+            
+            <div class="mb-4">
+              <label class="form-label">Prix de la consultation (DHS) *</label>
+              <input 
+                type="number" 
+                class="form-control" 
+                formControlName="prix"
+                placeholder="0.00">
+              <div *ngIf="consultationForm.get('prix')?.invalid && consultationForm.get('prix')?.touched" 
+                   class="text-danger small">
+                Prix valide requis
+              </div>
+            </div>
+            
+            <div class="d-flex gap-2">
+              <button 
+                type="submit" 
+                class="btn btn-success"
+                [disabled]="consultationForm.invalid">
+                <i class="bi bi-check-lg me-2"></i>Enregistrer
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-outline-secondary"
+                (click)="cancelConsultation()">
+                <i class="bi bi-x-lg me-2"></i>Annuler
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

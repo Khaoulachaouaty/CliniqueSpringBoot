@@ -1,3 +1,4 @@
+// guards/patient.guard.ts
 import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
@@ -7,7 +8,7 @@ export const patientGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (!authService.isLoggedIn()) {
-    router.navigate(['/login']);
+    router.navigate(['/login']); // 🔥 LOGIN
     return false;
   }
 
@@ -24,6 +25,6 @@ export const patientGuard: CanActivateFn = () => {
     'MEDECIN': '/medecin/dashboard'
   };
   
-  router.navigate([routes[normalizedRole || ''] || '/login']);
+  router.navigate([routes[normalizedRole || ''] || '/login']); // 🔥 Fallback login
   return false;
 };

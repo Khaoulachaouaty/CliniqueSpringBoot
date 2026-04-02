@@ -116,46 +116,60 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    @Override
-    public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByUsername(request.getEmail())
-                .orElse(null);
-        
-        if (user == null) {
-            return AuthResponse.builder()
-                    .message("Email ou mot de passe incorrect")
-                    .success(false)
-                    .build();
-        }
-        
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            return AuthResponse.builder()
-                    .message("Email ou mot de passe incorrect")
-                    .success(false)
-                    .build();
-        }
-        
-        if (user.getEnabled() == null || !user.getEnabled()) {
-            return AuthResponse.builder()
-                    .message("Compte désactivé")
-                    .success(false)
-                    .build();
-        }
-        
-        // 🔥 EXTRAIRE LES RÔLES
-        List<String> roleNames = user.getRoles().stream()
-                .map(Role::getRole)
-                .collect(Collectors.toList());
-        
-        System.out.println("✅ Login: " + user.getUsername() + " | Rôles: " + roleNames);
-        
+@Override
+public AuthResponse login(LoginRequest request) {
+    User user = userRepository.findByUsername(request.getEmail())
+            .orElse(null);
+    
+    if (user == null) {
         return AuthResponse.builder()
-                .message("Connexion réussie")
-                .success(true)
-                .userId(user.getUserId())
-                .email(user.getUsername())
-                .nomComplet(user.getNomComplet())
-                .roles(roleNames)
+                .message("Email ou mot de passe incorrect")
+                .success(false)
                 .build();
     }
+    
+    if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        return AuthResponse.builder()
+                .message("Email ou mot de passe incorrect")
+                .success(false)
+                .build();
+    }
+    
+    if (user.getEnabled() == null || !user.getEnabled()) {
+        return AuthResponse.builder()
+                .message("Compte désactivé")
+                .success(false)
+                .build();
+    }
+    
+    // 🔥 UTILISER VOS MÉTHODES EXISTANTES
+    Long patientId = patientRepository.findByUserUserId(user.getUserId())
+            .map(Patient::getId)
+            .orElse(null);
+    
+    Long medecinId = medecinRepository.findByUserUserId(user.getUserId())
+            .map(Medecin::getId)
+            .orElse(null);
+    
+    List<String> roleNames = user.getRoles().stream()
+            .map(Role::getRole)
+            .collect(Collectors.toList());
+    
+    System.out.println("✅ Login: " + user.getUsername() + 
+                     " | Rôles: " + roleNames + 
+                     " | PatientId: " + patientId + 
+                     " | MedecinId: " + medecinId);
+    
+    return AuthResponse.builder()
+            .message("Connexion réussie")
+            .success(true)
+            .userId(user.getUserId())
+            .email(user.getUsername())
+            .nomComplet(user.getNomComplet())
+            .roles(roleNames)
+            .patientId(patientId)      // 🔥 AJOUTÉ
+            .medecinId(medecinId)        // 🔥 AJOUTÉ
+            .build();
+}
+
 }

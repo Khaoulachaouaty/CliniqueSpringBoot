@@ -15,7 +15,7 @@ import { CreateMedecinRequest } from '../../../models/user.model';
 @Component({
   selector: 'app-create-medecin',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './create-medecin.component.html',
   styleUrls: ['./create-medecin.component.css']
 })

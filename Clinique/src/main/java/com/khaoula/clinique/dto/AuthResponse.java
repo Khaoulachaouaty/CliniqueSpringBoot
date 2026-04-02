@@ -18,4 +18,7 @@ public class AuthResponse {
     private String email;
     private String nomComplet;
     private List<String> roles;
+    
+    private Long patientId;  
+    private Long medecinId;
 }

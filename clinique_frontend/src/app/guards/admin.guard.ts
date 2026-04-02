@@ -1,3 +1,4 @@
+// guards/admin.guard.ts
 import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
@@ -9,7 +10,7 @@ export const adminGuard: CanActivateFn = () => {
   // Vérifier si connecté
   if (!authService.isLoggedIn()) {
     console.log('🔒 Guard ADMIN: Non connecté');
-    router.navigate(['/login']);
+    router.navigate(['/login']); // 🔥 LOGIN pas welcome
     return false;
   }
 
@@ -33,7 +34,7 @@ export const adminGuard: CanActivateFn = () => {
     'PATIENT': '/patient/dashboard'
   };
   
-  const redirectRoute = routes[normalizedRole || ''] || '/login';
+  const redirectRoute = routes[normalizedRole || ''] || '/login'; // 🔥 Fallback vers login
   router.navigate([redirectRoute]);
   return false;
 };

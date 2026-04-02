@@ -4,23 +4,14 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h2 class="fw-bold text-success mb-1">Nouveau Médecin</h2>
-        <p class="text-muted mb-0">Créer un compte professionnel</p>
       </div>
-      <a routerLink="/admin/dashboard" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-2"></i>Retour au dashboard
-      </a>
     </div>
 
     <div class="row justify-content-center">
       <div class="col-md-8 col-lg-6">
         <div class="card border-0 shadow-lg rounded-4">
           <div class="card-body p-4">
-            <!-- Icon -->
-            <div class="text-center mb-4">
-              <div class="icon-circle bg-warning bg-opacity-10 text-warning mx-auto mb-3">
-                <i class="bi bi-person-plus-fill fs-2"></i>
-              </div>
-            </div>
+
 
             <!-- Alerts -->
             @if (errorMessage) {
@@ -48,7 +39,7 @@
                     class="form-control" 
                     [class.is-invalid]="medecinForm.get('nom')?.invalid && medecinForm.get('nom')?.touched"
                     formControlName="nom" 
-                    placeholder="Martin">
+                    placeholder="Ben Salem">
                   @if (medecinForm.get('nom')?.invalid && medecinForm.get('nom')?.touched) {
                     <div class="invalid-feedback small">Nom requis (min 2 caractères)</div>
                   }
@@ -62,7 +53,7 @@
                     class="form-control" 
                     [class.is-invalid]="medecinForm.get('prenom')?.invalid && medecinForm.get('prenom')?.touched"
                     formControlName="prenom" 
-                    placeholder="Sophie">
+                    placeholder="Mohamed">
                   @if (medecinForm.get('prenom')?.invalid && medecinForm.get('prenom')?.touched) {
                     <div class="invalid-feedback small">Prénom requis (min 2 caractères)</div>
                   }
@@ -77,7 +68,7 @@
                   class="form-control" 
                   [class.is-invalid]="medecinForm.get('email')?.invalid && medecinForm.get('email')?.touched"
                   formControlName="email" 
-                  placeholder="dr.martin@mediclinic.com">
+                  placeholder="dr.mohamed@mediclinic.com">
                 @if (medecinForm.get('email')?.invalid && medecinForm.get('email')?.touched) {
                   <div class="invalid-feedback small">Email valide requis</div>
                 }

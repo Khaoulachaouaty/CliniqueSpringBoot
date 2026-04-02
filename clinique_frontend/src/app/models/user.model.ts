@@ -6,6 +6,8 @@ export interface User {
   tel?: string;
   roles?: string[];
   enabled?: boolean;
+  patientId?: number;  // 🔥 AJOUTÉ
+  medecinId?: number; 
 }
 
 export interface LoginRequest {
@@ -30,6 +32,7 @@ export interface CreateMedecinRequest {
   prenom: string;
   tel?: string;
   specialite: string;
+
 }
 
 // 🔥 AUTH RESPONSE COMPLET
@@ -40,6 +43,9 @@ export interface AuthResponse {
   email?: string;
   nomComplet?: string;
   roles?: string[];
+  patientId?: number; 
+  medecinId?: number;  
+
 }
 
 // Garder pour compatibilité si besoin

@@ -26,7 +26,6 @@ public class Patient {
     
     private String dossierMedical;
     private Date dateNaissance;
-    // tel supprimé - maintenant dans User
     
     @OneToOne
     @JoinColumn(name = "user_id")

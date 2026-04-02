@@ -1,55 +1,84 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
+import { RendezVousService } from '../../../services/rendezvous.service';
+import { RendezVous } from '../../../models/rendezvous.model';
 
 @Component({
   selector: 'app-medecin-dashboard',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="container py-4">
-      <h2 class="mb-4">
-        <i class="bi bi-heart-pulse me-2"></i>Espace Médecin
-      </h2>
-
-      <div class="row g-4">
-        <div class="col-md-4">
-          <div class="list-group shadow-sm">
-            <a href="#" class="list-group-item list-group-item-action active">
-              <i class="bi bi-calendar-check me-2"></i>Mes Rendez-vous
-            </a>
-            <a href="#" class="list-group-item list-group-item-action">
-              <i class="bi bi-people me-2"></i>Mes Patients
-            </a>
-            <a href="#" class="list-group-item list-group-item-action">
-              <i class="bi bi-clock me-2"></i>Mes Disponibilités
-            </a>
-            <a href="#" class="list-group-item list-group-item-action">
-              <i class="bi bi-file-text me-2"></i>Dossiers Médicaux
-            </a>
-          </div>
-        </div>
-        
-        <div class="col-md-8">
-          <div class="card shadow-sm">
-            <div class="card-header bg-white">
-              <h5 class="mb-0">Rendez-vous du jour</h5>
-            </div>
-            <div class="card-body">
-              <div class="alert alert-info d-flex align-items-center">
-                <i class="bi bi-info-circle-fill me-2 fs-4"></i>
-                <div>
-                  <strong>Aucun rendez-vous prévu aujourd'hui.</strong><br>
-                  <small>La gestion des rendez-vous sera implémentée prochainement.</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent {
-  constructor(public authService: AuthService) {}
+export class DashboardComponent implements OnInit {
+  
+  todayRdv: RendezVous[] = [];
+  totalPatients = 0;
+  pendingRdv = 0;
+  loading = true;
+  currentUserId: number | null = null;
+
+  constructor(
+    public authService: AuthService,
+    private rdvService: RendezVousService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.currentUserId = this.authService.getCurrentUserId();
+    this.loadDashboardData();
+  }
+
+  loadDashboardData(): void {
+    if (!this.currentUserId) return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    // RDV du jour
+    this.rdvService.getRendezVousDuJour(this.currentUserId, today).subscribe({
+      next: (rdvs: RendezVous[]) => {
+        this.todayRdv = rdvs.filter(r => r.statut !== 'ANNULE');
+        this.loading = false;
+      },
+      error: () => this.loading = false
+    });
+    
+    // Tous les RDV pour stats
+    this.rdvService.getRendezVousByMedecin(this.currentUserId).subscribe({
+      next: (rdvs: RendezVous[]) => {
+        // Patients uniques
+        const patientIds = new Set(rdvs.map(r => r.patientId));
+        this.totalPatients = patientIds.size;
+        
+        // RDV en attente
+        this.pendingRdv = rdvs.filter(r => r.statut === 'EN_ATTENTE').length;
+      }
+    });
+  }
+
+  navigateTo(path: string): void {
+    this.router.navigate([path]);
+  }
+
+  getStatusClass(statut: string): string {
+    switch (statut) {
+      case 'CONFIRME': return 'bg-success';
+      case 'EN_ATTENTE': return 'bg-warning';
+      case 'ANNULE': return 'bg-danger';
+      case 'TERMINE': return 'bg-secondary';
+      default: return 'bg-info';
+    }
+  }
+
+  getStatusLabel(statut: string): string {
+    switch (statut) {
+      case 'CONFIRME': return 'Confirmé';
+      case 'EN_ATTENTE': return 'En attente';
+      case 'ANNULE': return 'Annulé';
+      case 'TERMINE': return 'Terminé';
+      default: return statut;
+    }
+  }
 }

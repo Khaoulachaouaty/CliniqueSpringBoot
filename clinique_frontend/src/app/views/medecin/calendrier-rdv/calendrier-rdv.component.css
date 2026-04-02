@@ -1,0 +1,136 @@
+/* Toast container */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  min-width: 300px;
+}
+
+/* Calendar styles */
+.calendar-day {
+  aspect-ratio: 1;
+  border: 1px solid #e9ecef;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 60px;
+}
+
+.calendar-day:hover {
+  background: #e8f5e9;
+  transform: scale(1.05);
+  z-index: 1;
+}
+
+.calendar-day.today {
+  background: #d4edda;
+  border-color: #198754;
+  font-weight: bold;
+}
+
+.calendar-day.today .day-number {
+  color: #198754;
+}
+
+.calendar-day.selected {
+  background: #198754;
+  color: white;
+  border-color: #198754;
+  box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.3);
+}
+
+.calendar-day.other-month {
+  color: #adb5bd;
+  background: #f8f9fa;
+}
+
+.day-number {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.rdv-indicators {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+}
+
+.rdv-indicators .badge {
+  font-size: 0.65rem;
+  padding: 0.25em 0.5em;
+}
+
+/* Card styles */
+.card {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.card-header {
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  padding: 1rem;
+}
+
+/* RDV Card with status indicator */
+.rdv-card {
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.rdv-card.status-en-attente { border-left-color: #ffc107; }
+.rdv-card.status-confirme { border-left-color: #198754; }
+.rdv-card.status-termine { border-left-color: #6c757d; }
+.rdv-card.status-annule { border-left-color: #dc3545; }
+
+.rdv-card:hover {
+  background: #f8f9fa;
+  transform: translateX(4px);
+}
+
+/* List group item */
+.list-group-item {
+  padding: 1rem;
+  transition: all 0.2s;
+}
+
+/* Button animations */
+.btn {
+  transition: all 0.2s;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Spinner in button */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+  .toast-container {
+    left: 20px;
+    right: 20px;
+    min-width: auto;
+  }
+  
+  .calendar-day {
+    min-height: 50px;
+  }
+}

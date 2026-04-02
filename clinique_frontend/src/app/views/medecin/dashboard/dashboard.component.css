@@ -1,0 +1,31 @@
+.card {
+  border: none;
+  border-radius: 12px;
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.bg-success {
+  background: linear-gradient(135deg, #198754, #146c43) !important;
+}
+
+.bg-info {
+  background: linear-gradient(135deg, #0dcaf0, #087990) !important;
+}
+
+.bg-warning {
+  background: linear-gradient(135deg, #ffc107, #cc9a06) !important;
+}
+
+.list-group-item {
+  border-left: 4px solid transparent;
+  transition: all 0.2s;
+}
+
+.list-group-item:hover {
+  border-left-color: #198754;
+  background: #f8f9fa;
+}

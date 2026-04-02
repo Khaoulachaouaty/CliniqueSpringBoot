@@ -1,0 +1,50 @@
+.timeline {
+  position: relative;
+}
+
+.timeline-item {
+  position: relative;
+  margin-left: 1rem;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #198754;
+}
+
+.timeline-item.border-secondary::before {
+  background: #6c757d;
+}
+
+.timeline-item.border-success::before {
+  background: #198754;
+}
+
+.timeline-item.border-danger::before {
+  background: #dc3545;
+}
+
+.timeline-item.border-warning::before {
+  background: #ffc107;
+}
+
+.list-group-item.active {
+  background: #198754;
+  border-color: #198754;
+}
+
+.card {
+  border: none;
+  border-radius: 12px;
+}
+
+.form-control:focus {
+  border-color: #198754;
+  box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}

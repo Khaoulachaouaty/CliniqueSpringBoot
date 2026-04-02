@@ -1,14 +1,26 @@
 <nav class="admin-navbar navbar navbar-expand-lg sticky-top">
   <div class="container">
     <!-- Logo -->
-    <a class="navbar-brand d-flex align-items-center gap-2" 
-       href="javascript:void(0)"
-       (click)="navigateTo('/admin/dashboard')">
-      <div class="admin-logo">
-        <i class="bi bi-shield-lock-fill text-white"></i>
-      </div>
-      <span class="fw-bold text-white">MediClinic Admin</span>
-    </a>
+<a class="navbar-brand d-flex align-items-center gap-2" 
+   href="javascript:void(0)"
+   (click)="navigateTo('/admin/dashboard')">
+  
+  <div class="admin-logo d-flex align-items-center justify-content-center">
+    <svg xmlns="http://www.w3.org/2000/svg" 
+         width="24" 
+         height="24" 
+         viewBox="0 0 24 24" 
+         fill="none" 
+         stroke="white" 
+         stroke-width="2" 
+         stroke-linecap="round" 
+         stroke-linejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+    </svg>
+  </div>
+
+  <span class="fw-bold text-white">MediClinic Admin</span>
+</a>
 
     <!-- Toggle mobile -->
     <button class="navbar-toggler border-0" type="button" (click)="isMenuOpen = !isMenuOpen">

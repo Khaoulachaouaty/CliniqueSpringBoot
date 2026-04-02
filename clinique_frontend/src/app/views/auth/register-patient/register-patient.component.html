@@ -5,9 +5,19 @@
         <div class="auth-card animate-fade-in-up">
           <!-- Logo -->
           <div class="text-center mb-3">
-            <div class="brand-icon mx-auto mb-2">
-              <i class="bi bi-person-heart text-white display-5"></i>
-            </div>
+     <div class="brand-icon text-white mx-auto mb-3 d-flex align-items-center justify-content-center">
+  <svg xmlns="http://www.w3.org/2000/svg" 
+       width="40" 
+       height="40" 
+       viewBox="0 0 24 24" 
+       fill="none" 
+       stroke="currentColor" 
+       stroke-width="2.5" 
+       stroke-linecap="round" 
+       stroke-linejoin="round">
+    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+  </svg>
+</div>
             <h2 class="fw-bold text-success mb-1">MediClinic</h2>
             <p class="text-muted small">Créer votre compte</p>
           </div>
@@ -49,7 +59,7 @@
                     class="form-control form-control-sm"
                     [class.is-invalid]="registerForm.get('nom')?.invalid && registerForm.get('nom')?.touched"
                     formControlName="nom"
-                    placeholder="Dupont">
+                    placeholder="Jouini">
                   @if (registerForm.get('nom')?.invalid && registerForm.get('nom')?.touched) {
                     <div class="invalid-feedback d-block small">Nom requis (min 2 caractères)</div>
                   }
@@ -61,7 +71,7 @@
                     class="form-control form-control-sm"
                     [class.is-invalid]="registerForm.get('prenom')?.invalid && registerForm.get('prenom')?.touched"
                     formControlName="prenom"
-                    placeholder="Marie">
+                    placeholder="Fatma">
                   @if (registerForm.get('prenom')?.invalid && registerForm.get('prenom')?.touched) {
                     <div class="invalid-feedback d-block small">Prénom requis (min 2 caractères)</div>
                   }
@@ -79,7 +89,7 @@
                     class="form-control border-start-0 ps-0"
                     [class.is-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
                     formControlName="email"
-                    placeholder="marie@email.com">
+                    placeholder="fatma@email.com">
                 </div>
                 @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
                   <div class="invalid-feedback d-block small">Email valide requis</div>
@@ -97,7 +107,7 @@
                     class="form-control border-start-0 ps-0"
                     [class.is-invalid]="registerForm.get('tel')?.invalid && registerForm.get('tel')?.touched"
                     formControlName="tel"
-                    placeholder="12345678">
+                    placeholder="20145972">
                 </div>
                 @if (registerForm.get('tel')?.invalid && registerForm.get('tel')?.touched) {
                   <div class="invalid-feedback d-block small">8  chiffres requis</div>

@@ -1,79 +1,548 @@
+/* ============================================
+   NAVBAR - DESIGN MÉDICAL MODERNE
+   ============================================ */
+
 .patient-navbar {
-  background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+  background: linear-gradient(135deg, #0d9488 0%, #059669 50%, #10b981 100%);
   padding: 0.75rem 0;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 25px rgba(13, 148, 136, 0.35);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.patient-logo {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
+/* Logo */
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.brand-text .brand-name {
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: white;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.brand-text .brand-role {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.9);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+
+.nav-icon {
+  width: 46px;
+  height: 46px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
 }
 
-.nav-link {
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
+.navbar-brand:hover .nav-icon {
+  transform: scale(1.05) rotate(-5deg);
+  background: rgba(255,255,255,0.25);
+}
+
+/* Navigation Links */
+.patient-navbar .navbar-nav {
   gap: 0.5rem;
 }
 
-.nav-link:hover, .nav-link.active {
-  color: white;
-  background: rgba(255, 255, 255, 0.2);
+.patient-navbar .nav-link {
+  color: rgba(255,255,255,0.95) !important;
+  font-weight: 500;
+  padding: 0.7rem 1.3rem !important;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  position: relative;
+  overflow: hidden;
 }
 
-.patient-avatar {
-  width: 28px;
-  height: 28px;
-  background: white;
-  color: #0ea5e9;
+.patient-navbar .nav-link::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.12);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+  border-radius: 12px;
+}
+
+.patient-navbar .nav-link:hover::before {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.patient-navbar .nav-link:hover {
+  color: white !important;
+  transform: translateY(-2px);
+}
+
+.patient-navbar .nav-link i {
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.patient-navbar .nav-link:hover i {
+  transform: scale(1.15) rotate(-5deg);
+}
+
+/* ============================================
+   BOUTON NOTIFICATIONS
+   ============================================ */
+
+.btn-notification {
+  position: relative;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
+  backdrop-filter: blur(8px);
+}
+
+.btn-notification:hover {
+  background: rgba(255,255,255,0.25);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+.btn-notification.has-unread {
+  animation: gentle-shake 3s infinite;
+}
+
+@keyframes gentle-shake {
+  0%, 90%, 100% { transform: rotate(0deg); }
+  92%, 96% { transform: rotate(-5deg); }
+  94%, 98% { transform: rotate(5deg); }
+}
+
+.btn-notification i {
+  font-size: 1.4rem;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 800;
+  min-width: 24px;
+  height: 24px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: 0 6px;
+  border: 3px solid #0d9488;
+  animation: pulse-badge 2s infinite;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  z-index: 10;
 }
 
-.dropdown-menu {
-  min-width: 220px;
-  padding: 0.5rem;
+@keyframes pulse-badge {
+  0%, 100% { transform: scale(1); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); }
+  50% { transform: scale(1.15); box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6); }
 }
 
-.dropdown-item {
-  border-radius: 0.5rem;
-  transition: background 0.2s;
+/* ============================================
+   MENU NOTIFICATIONS
+   ============================================ */
+
+.notification-menu {
+  position: absolute;
+  top: calc(100% + 15px);
+  right: -10px;
+  width: 400px;
+  max-height: 520px;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 20px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+  border: none;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-15px) scale(0.95);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 1050;
 }
 
-.dropdown-item:hover {
+.notification-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.notification-menu::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  right: 26px;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 12px solid rgba(255, 255, 255, 0.98);
+  filter: drop-shadow(0 -3px 3px rgba(0,0,0,0.05));
+}
+
+/* Header */
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  border-bottom: 1px solid #f1f5f9;
+  background: linear-gradient(to right, #f8fafc, #ffffff);
+}
+
+.notification-header h6 {
+  font-size: 1.15rem;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.notification-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-action {
+  background: #f1f5f9;
+  border: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+  transform: scale(1.1);
+}
+
+.btn-mark-all:hover {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.btn-settings:hover {
   background: #e0f2fe;
+  color: #0284c7;
 }
 
-/* Badge notification */
-.position-absolute {
-  width: 8px;
-  height: 8px;
+.btn-action i {
+  font-size: 1.2rem;
 }
 
-/* Mobile */
+/* Liste */
+.notification-list {
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.notification-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* Items */
+.notification-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px 22px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+  align-items: flex-start;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+  transform: translateX(6px);
+}
+
+.notification-item.unread {
+  background: linear-gradient(to right, #ecfdf5, #f0fdf4);
+  border-left: 4px solid #10b981;
+}
+
+.notification-item.unread:hover {
+  background: linear-gradient(to right, #d1fae5, #dcfce7);
+}
+
+/* Icônes par type */
+.notification-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease;
+}
+
+.notification-item:hover .notification-icon {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.notification-icon i {
+  font-size: 1.4rem;
+}
+
+.type-rappel_rdv { 
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 6px 15px rgba(59, 130, 246, 0.35);
+}
+
+.type-confirmation_rdv { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 6px 15px rgba(16, 185, 129, 0.35);
+}
+
+.type-annulation_rdv { 
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 6px 15px rgba(239, 68, 68, 0.35);
+}
+
+.type-facture { 
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 6px 15px rgba(245, 158, 11, 0.35);
+}
+
+.type-paiement_recu { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 6px 15px rgba(16, 185, 129, 0.35);
+}
+
+.type-systeme { 
+  background: linear-gradient(135deg, #64748b, #475569);
+  box-shadow: 0 6px 15px rgba(100, 116, 139, 0.35);
+}
+
+/* Content */
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-text {
+  font-size: 0.95rem;
+  color: #1e293b;
+  margin-bottom: 6px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.notification-time {
+  font-size: 0.8rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+}
+
+.notification-time i {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.unread-indicator {
+  color: #10b981;
+  font-size: 0.6rem;
+  animation: pulse-dot 2s infinite;
+  margin-top: 4px;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.3); }
+}
+
+/* Empty state */
+.notification-empty {
+  padding: 70px 20px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.notification-empty i {
+  font-size: 4.5rem;
+  opacity: 0.25;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.notification-empty p {
+  font-size: 1.1rem;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.notification-empty small {
+  font-size: 0.85rem;
+}
+
+/* Footer */
+.notification-footer {
+  padding: 16px;
+  text-align: center;
+  border-top: 1px solid #f1f5f9;
+  background: linear-gradient(to right, #f8fafc, #ffffff);
+}
+
+.notification-footer a {
+  color: #0d9488;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s;
+  padding: 8px 16px;
+  border-radius: 10px;
+}
+
+.notification-footer a:hover {
+  color: #059669;
+  background: #f0fdf4;
+  transform: translateX(4px);
+}
+
+/* ============================================
+   BOUTON DÉCONNEXION
+   ============================================ */
+
+.btn-logout {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
+  backdrop-filter: blur(8px);
+}
+
+.btn-logout:hover {
+  background: rgba(239, 68, 68, 0.9);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.35);
+}
+
+.btn-logout i {
+  font-size: 1.4rem;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE
+   ============================================ */
+
 @media (max-width: 991px) {
-  .navbar-collapse {
-    background: rgba(0, 0, 0, 0.2);
-    padding: 1rem;
-    border-radius: 1rem;
-    margin-top: 1rem;
+  .patient-navbar {
+    padding: 0.6rem 0;
   }
   
-  .nav-link {
-    padding: 0.75rem 1rem;
+  .patient-navbar .navbar-collapse {
+    background: rgba(0,0,0,0.15);
+    margin: 1rem -1rem -0.75rem;
+    padding: 1.5rem 1rem;
+    border-radius: 20px 20px 0 0;
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.1);
   }
+  
+  .patient-navbar .nav-link {
+    padding: 1rem 1.2rem !important;
+    margin-bottom: 0.75rem;
+    font-size: 1.05rem;
+  }
+  
+  .notification-menu {
+    position: fixed;
+    top: 85px;
+    right: 15px;
+    left: 15px;
+    width: auto;
+  }
+  
+  .notification-menu::before {
+    right: 85px;
+  }
+}
+
+@media (max-width: 576px) {
+  .brand-text .brand-name {
+    font-size: 1.3rem;
+  }
+  
+  .nav-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .notification-menu {
+    right: 10px;
+    left: 10px;
+  }
+}
+
+/* Toggle button */
+.navbar-toggler {
+  color: white !important;
+  padding: 0.6rem;
+  border-radius: 12px;
+  transition: all 0.2s;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-toggler:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+.navbar-toggler i {
+  font-size: 1.6rem;
 }
