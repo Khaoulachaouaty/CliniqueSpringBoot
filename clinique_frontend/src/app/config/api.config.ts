@@ -1,6 +1,6 @@
 // config/api.config.ts
 export const API_CONFIG = {
-  baseUrl: 'http://localhost:8081/clinique/api',
+  baseUrl: 'http://localhost:8082/clinique/api',
   endpoints: {
     auth: {
       login: '/auth/login',

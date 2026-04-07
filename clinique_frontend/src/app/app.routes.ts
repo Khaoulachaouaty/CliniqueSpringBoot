@@ -93,6 +93,22 @@ export const routes: Routes = [
         path: 'notifications',
         loadComponent: () => import('./views/medecin/notification-medecin/notification-medecin.component')
           .then(m => m.NotificationMedecinComponent)
+      },
+      // 🔥 ROUTES CONSULTATION AJOUTÉES
+      {
+        path: 'consultation/new',
+        loadComponent: () => import('./views/medecin/consultation-form/consultation-form.component')
+          .then(m => m.ConsultationFormComponent)
+      },
+      {
+        path: 'consultation/:id',
+        loadComponent: () => import('./views/medecin/consultation-detail/consultation-detail.component')
+          .then(m => m.ConsultationDetailComponent)
+      },
+      {
+        path: 'facture/:id',
+        loadComponent: () => import('./views/medecin/facture-view/facture-view.component')
+          .then(m => m.FactureViewComponent)
       }
     ]
   },

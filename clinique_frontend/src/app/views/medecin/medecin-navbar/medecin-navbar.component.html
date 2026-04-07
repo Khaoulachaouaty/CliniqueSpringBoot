@@ -11,37 +11,32 @@
       </div>
     </a>
 
-    <!-- Toggle Button -->
-    <button class="navbar-toggler" type="button" (click)="toggleMenu()">
-      <i class="bi" [class.bi-list]="!isMenuOpen" [class.bi-x-lg]="isMenuOpen"></i>
-    </button>
-
     <!-- Menu -->
     <div class="collapse navbar-collapse" [class.show]="isMenuOpen">
       <ul class="navbar-nav mx-auto align-items-center gap-1">
         <li class="nav-item">
           <a class="nav-link" href="javascript:void(0)" (click)="navigateTo('/medecin/dashboard')">
-            <i class="bi bi-speedometer2"></i> Dashboard
+            Dashboard
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="javascript:void(0)" (click)="navigateTo('/medecin/rendezvous')">
-            <i class="bi bi-calendar-check"></i> Mes Rendez-vous
+             Mes Rendez-vous
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="javascript:void(0)" (click)="navigateTo('/medecin/calendrier')">
-            <i class="bi bi-calendar3"></i> Calendrier
+             Calendrier
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="javascript:void(0)" (click)="navigateTo('/medecin/patients')">
-            <i class="bi bi-people"></i> Mes Patients
+             Mes Patients
           </a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="javascript:void(0)" (click)="navigateTo('/medecin/dossiers')">
-            <i class="bi bi-folder-medical"></i> Dossiers Médicaux
+             Dossiers Médicaux
           </a>
         </li>
       </ul>

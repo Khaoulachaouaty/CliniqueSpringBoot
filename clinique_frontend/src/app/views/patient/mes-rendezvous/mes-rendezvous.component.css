@@ -43,3 +43,50 @@
   font-size: 0.75rem;
   padding: 0.5em 1em;
 }
+
+/* Animations pour les modales */
+.modal.show {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Toast animations */
+.toast {
+  animation: slideInRight 0.3s ease-out;
+  min-width: 300px;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Overlay backdrop */
+.modal {
+  backdrop-filter: blur(2px);
+}

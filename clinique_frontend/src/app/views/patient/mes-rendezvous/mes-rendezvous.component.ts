@@ -26,6 +26,15 @@ export class MesRendezvousComponent implements OnInit {
   loadingOccupes = false;
   errorCreneaux = '';
 
+  // Propriétés pour les modales et toasts
+  showCancelModal = false;
+  rdvToCancel: RendezVous | null = null;
+  showSuccessModal = false;
+  successMessage = '';
+  showErrorModal = false;
+  errorModalMessage = '';
+  showEditSuccess = false;
+
   constructor(
     private rdvService: RendezVousService,
     private authService: AuthService
@@ -60,74 +69,74 @@ export class MesRendezvousComponent implements OnInit {
     return rdv.statut === 'EN_ATTENTE';
   }
 
-startEdit(rdv: RendezVous): void {
-  if (!this.canModifyOrCancel(rdv)) {
-    alert('Vous ne pouvez modifier que les rendez-vous en attente de confirmation');
-    return;
+  startEdit(rdv: RendezVous): void {
+    if (!this.canModifyOrCancel(rdv)) {
+      this.showError('Vous ne pouvez modifier que les rendez-vous en attente de confirmation');
+      return;
+    }
+
+    // Créer une copie et formater la date pour l'input HTML
+    this.editingRdv = { 
+      ...rdv,
+      // Convertir la date au format YYYY-MM-DD pour l'input type="date"
+      date: this.formatDateForInput(rdv.date)
+    };
+
+    this.loadCreneaux(this.editingRdv!.medecinId, this.editingRdv!.date);
   }
 
-  // 🔥 Créer une copie et formater la date pour l'input HTML
-  this.editingRdv = { 
-    ...rdv,
-    // Convertir la date au format YYYY-MM-DD pour l'input type="date"
-    date: this.formatDateForInput(rdv.date)
-  };
+  // NOUVELLE MÉTHODE : Formater la date pour l'input HTML
+  private formatDateForInput(date: string | Date): string {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 
-  this.loadCreneaux(this.editingRdv!.medecinId, this.editingRdv!.date);
-}
+  loadCreneaux(medecinId: number, date: string): void {
+    this.loadingCreneaux = true;
+    this.loadingOccupes = true;
+    this.errorCreneaux = '';
 
-// 🔥 NOUVELLE MÉTHODE : Formater la date pour l'input HTML
-private formatDateForInput(date: string | Date): string {
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-loadCreneaux(medecinId: number, date: string): void {
-  this.loadingCreneaux = true;
-  this.loadingOccupes = true;
-  this.errorCreneaux = '';
-
-  this.rdvService.getCreneauxDisponibles(medecinId, date).subscribe({
-    next: (disponibles) => {
-      this.rdvService.getCreneauxOccupes(medecinId, date).subscribe({
-        next: (occupes) => {
-          this.creneauxOccupes = occupes;
-          
-          // 🔥 SI on modifie un RDV existant et qu'on garde la même date,
-          // son créneau actuel apparaît dans "occupes", donc on doit l'ajouter aux disponibles
-          if (this.editingRdv && this.editingRdv.heure) {
-            const heureActuelle = this.editingRdv.heure;
-            // Si l'heure actuelle n'est pas dans disponibles (car "occupée" par nous-mêmes),
-            // on l'ajoute quand même pour permettre de la sélectionner
-            if (!disponibles.includes(heureActuelle) && occupes.includes(heureActuelle)) {
-              // Vérifier si c'est notre propre RDV qui occupe ce créneau
-              this.creneauxDisponibles = [...disponibles, heureActuelle].sort();
+    this.rdvService.getCreneauxDisponibles(medecinId, date).subscribe({
+      next: (disponibles) => {
+        this.rdvService.getCreneauxOccupes(medecinId, date).subscribe({
+          next: (occupes) => {
+            this.creneauxOccupes = occupes;
+            
+            // SI on modifie un RDV existant et qu'on garde la même date,
+            // son créneau actuel apparaît dans "occupes", donc on doit l'ajouter aux disponibles
+            if (this.editingRdv && this.editingRdv.heure) {
+              const heureActuelle = this.editingRdv.heure;
+              // Si l'heure actuelle n'est pas dans disponibles (car "occupée" par nous-mêmes),
+              // on l'ajoute quand même pour permettre de la sélectionner
+              if (!disponibles.includes(heureActuelle) && occupes.includes(heureActuelle)) {
+                // Vérifier si c'est notre propre RDV qui occupe ce créneau
+                this.creneauxDisponibles = [...disponibles, heureActuelle].sort();
+              } else {
+                this.creneauxDisponibles = disponibles;
+              }
             } else {
               this.creneauxDisponibles = disponibles;
             }
-          } else {
-            this.creneauxDisponibles = disponibles;
+            
+            this.loadingCreneaux = false;
+            this.loadingOccupes = false;
+          },
+          error: () => {
+            this.errorCreneaux = 'Erreur lors du chargement des créneaux';
+            this.loadingCreneaux = false;
+            this.loadingOccupes = false;
           }
-          
-          this.loadingCreneaux = false;
-          this.loadingOccupes = false;
-        },
-        error: () => {
-          this.errorCreneaux = 'Erreur lors du chargement des créneaux';
-          this.loadingCreneaux = false;
-          this.loadingOccupes = false;
-        }
-      });
-    },
-    error: () => {
-      this.errorCreneaux = 'Erreur lors du chargement des créneaux';
-      this.loadingCreneaux = false;
-    }
-  });
-}
+        });
+      },
+      error: () => {
+        this.errorCreneaux = 'Erreur lors du chargement des créneaux';
+        this.loadingCreneaux = false;
+      }
+    });
+  }
 
   loadCreneauxOccupes(medecinId: number, date: string): void {
     this.rdvService.getCreneauxOccupes(medecinId, date).subscribe({
@@ -148,17 +157,17 @@ loadCreneaux(medecinId: number, date: string): void {
     return this.creneauxOccupes.includes(creneau);
   }
 
-updateDate(): void {
-  if (!this.editingRdv) return;
-  // 🔥 S'assurer qu'on recharge les créneaux pour la nouvelle date sélectionnée
-  this.loadCreneaux(this.editingRdv.medecinId, this.editingRdv.date);
-}
+  updateDate(): void {
+    if (!this.editingRdv) return;
+    // S'assurer qu'on recharge les créneaux pour la nouvelle date sélectionée
+    this.loadCreneaux(this.editingRdv.medecinId, this.editingRdv.date);
+  }
 
   saveEdit(): void {
     if (!this.editingRdv) return;
 
     if (this.isCreneauOccupe(this.editingRdv.heure)) {
-      alert('Ce créneau vient d’être réservé par un autre patient. Veuillez en choisir un autre.');
+      this.showError('Ce créneau vient d\'être réservé par un autre patient. Veuillez en choisir un autre.');
       this.updateDate();
       return;
     }
@@ -177,12 +186,13 @@ updateDate(): void {
     this.rdvService.modifierRendezVous(this.editingRdv.id, request, patientId).subscribe({
       next: () => {
         this.editingRdv = null;
+        this.showEditSuccess = true;
         this.loadRendezVous();
-        alert('Rendez-vous modifié avec succès !');
+        setTimeout(() => this.showEditSuccess = false, 3000);
       },
       error: (err) => {
         console.error(err);
-        alert('Erreur lors de la modification : ' + (err.error?.message || err.message));
+        this.showError(err.error?.message || 'Erreur lors de la modification');
       }
     });
   }
@@ -191,22 +201,58 @@ updateDate(): void {
     this.editingRdv = null;
   }
 
-  annulerRdv(id: number): void {
-    if (!confirm('Êtes-vous sûr de vouloir annuler ce rendez-vous ?')) return;
+  // NOUVELLE MÉTHODE : Ouvrir la modale de confirmation d'annulation
+  openCancelModal(rdv: RendezVous): void {
+    if (!this.canModifyOrCancel(rdv)) {
+      this.showError('Vous ne pouvez annuler que les rendez-vous en attente');
+      return;
+    }
+    this.rdvToCancel = rdv;
+    this.showCancelModal = true;
+  }
 
+  // NOUVELLE MÉTHODE : Confirmer l'annulation
+  confirmCancel(): void {
+    if (!this.rdvToCancel) return;
+    
     const patientId = this.authService.getPatientId();
     if (!patientId) return;
 
-    this.rdvService.cancelRendezVous(id, patientId).subscribe({
+    this.rdvService.cancelRendezVous(this.rdvToCancel.id, patientId).subscribe({
       next: () => {
-        alert('Rendez-vous annulé avec succès');
+        this.closeCancelModal();
+        this.showSuccess('Rendez-vous annulé avec succès');
         this.loadRendezVous();
       },
       error: (err) => {
-        console.error(err);
-        alert('Erreur lors de l\'annulation : ' + (err.error?.message || err.message));
+        this.closeCancelModal();
+        this.showError(err.error?.message || 'Erreur lors de l\'annulation');
       }
     });
+  }
+
+  // NOUVELLE MÉTHODE : Fermer la modale d'annulation
+  closeCancelModal(): void {
+    this.showCancelModal = false;
+    this.rdvToCancel = null;
+  }
+
+  // NOUVELLE MÉTHODE : Afficher le toast de succès
+  showSuccess(message: string): void {
+    this.successMessage = message;
+    this.showSuccessModal = true;
+    setTimeout(() => this.showSuccessModal = false, 3000);
+  }
+
+  // NOUVELLE MÉTHODE : Afficher le toast d'erreur
+  showError(message: string): void {
+    this.errorModalMessage = message;
+    this.showErrorModal = true;
+  }
+
+  // NOUVELLE MÉTHODE : Fermer le toast d'erreur
+  closeErrorModal(): void {
+    this.showErrorModal = false;
   }
 
   getStatusColor(statut: string): string {
