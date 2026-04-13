@@ -51,7 +51,7 @@ public class ConsultationServiceImpl implements ConsultationService {
         
         Consultation consultation = new Consultation();
         consultation.setRendezVous(rdv);
-        consultation.setDateConsultation(new Date());
+        // ❌ SUPPRIMÉ: consultation.setDateConsultation(new Date());
         consultation.setDiagnostic(request.getDiagnostic());
         consultation.setOrdonnance(request.getOrdonnance());
         consultation.setTraitement(request.getTraitement());
@@ -62,12 +62,15 @@ public class ConsultationServiceImpl implements ConsultationService {
         consultation.setStatutPaiement("EN_ATTENTE");
         
         Consultation saved = consultationRepository.save(consultation);
+        
+        // ✅ Maintenant on utilise le service pour mettre à jour le dossier
         dossierMedicalService.mettreAJourDossierApresConsultation(saved);
+        
         // Mettre à jour statut RDV
         rdv.setStatut("TERMINE");
         rendezVousRepository.save(rdv);
         
-        // 🔔 Notification de facture au patient
+        // Notification de facture au patient
         notificationService.notifierNouvelleFacture(saved);
         
         logger.info("✅ Consultation créée: id={}, montant={}", saved.getId(), saved.getMontantTotal());
@@ -91,7 +94,7 @@ public class ConsultationServiceImpl implements ConsultationService {
 
     @Override
     public List<ConsultationResponse> getConsultationsByMedecin(Long medecinId) {
-        return consultationRepository.findByRendezVousMedecinIdOrderByDateConsultationDesc(medecinId)
+        return consultationRepository.findByRendezVousMedecinIdOrderByRendezVousDateDesc(medecinId)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -99,7 +102,7 @@ public class ConsultationServiceImpl implements ConsultationService {
 
     @Override
     public List<ConsultationResponse> getConsultationsByPatient(Long patientId) {
-        return consultationRepository.findByRendezVousPatientIdOrderByDateConsultationDesc(patientId)
+        return consultationRepository.findByRendezVousPatientIdOrderByRendezVousDateDesc(patientId)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -109,13 +112,12 @@ public class ConsultationServiceImpl implements ConsultationService {
     public FactureResponse genererFacture(Long consultationId) {
         Consultation c = consultationRepository.findById(consultationId)
                 .orElseThrow(() -> new RuntimeException("Consultation non trouvée"));
-        
         return mapToFactureResponse(c);
     }
 
     @Override
     public List<FactureResponse> getFacturesByPatient(Long patientId) {
-        return consultationRepository.findByRendezVousPatientIdOrderByDateConsultationDesc(patientId)
+        return consultationRepository.findByRendezVousPatientIdOrderByRendezVousDateDesc(patientId)
                 .stream()
                 .map(this::mapToFactureResponse)
                 .collect(Collectors.toList());
@@ -134,9 +136,7 @@ public class ConsultationServiceImpl implements ConsultationService {
         c.setStatutPaiement(statut);
         Consultation saved = consultationRepository.save(c);
         
-        dossierMedicalService.mettreAJourDossierApresConsultation(saved);
-        
-        // 🔔 Notification de confirmation de paiement
+        // Notification de confirmation de paiement
         if ("PAYE".equals(statut)) {
             notificationService.notifierPaiementRecu(saved);
         }
@@ -150,72 +150,16 @@ public class ConsultationServiceImpl implements ConsultationService {
         return revenus != null ? revenus : 0.0;
     }
 
-    private ConsultationResponse mapToResponse(Consultation c) {
-        RendezVous rdv = c.getRendezVous();
-        Patient p = rdv.getPatient();
-        Medecin m = rdv.getMedecin();
-        
-        return ConsultationResponse.builder()
-                .id(c.getId())
-                .dateConsultation(c.getDateConsultation())
-                .diagnostic(c.getDiagnostic())
-                .ordonnance(c.getOrdonnance())
-                .traitement(c.getTraitement())
-                .notes(c.getNotes())
-                .prixConsultation(c.getPrixConsultation())
-                .montantMedicaments(c.getMontantMedicaments())
-                .montantTotal(c.getMontantTotal())
-                .statutPaiement(c.getStatutPaiement())
-                .rendezVousId(rdv.getId())
-                .dateRendezVous(rdv.getDate())
-                .heureRendezVous(rdv.getHeure())
-                .patientId(p.getId())
-                .patientNom(p.getNom())
-                .patientPrenom(p.getPrenom())
-                .patientEmail(p.getEmail())
-                .medecinId(m.getId())
-                .medecinNom(m.getNom())
-                .medecinPrenom(m.getPrenom())
-                .medecinSpecialite(m.getSpecialite())
-                .build();
-    }
-
-    private FactureResponse mapToFactureResponse(Consultation c) {
-        RendezVous rdv = c.getRendezVous();
-        Patient p = rdv.getPatient();
-        Medecin m = rdv.getMedecin();
-        
-        return FactureResponse.builder()
-                .consultationId(c.getId())
-                .numeroFacture(FactureResponse.genererNumero(c.getId()))
-                .dateFacture(c.getDateConsultation())
-                .patientNomComplet(p.getNomComplet())
-                .patientEmail(p.getEmail())
-                .patientTel(p.getTel())
-                .medecinNomComplet(m.getNomComplet())
-                .medecinSpecialite(m.getSpecialite())
-                .motifConsultation(rdv.getMotif())
-                .dateRendezVous(rdv.getDate())
-                .prixConsultation(c.getPrixConsultation())
-                .montantMedicaments(c.getMontantMedicaments())
-                .montantTotal(c.getMontantTotal())
-                .statutPaiement(c.getStatutPaiement())
-                .build();
-    }
-    
     @Override
     public FactureResponse genererFacturePDF(Long consultationId) {
         Consultation c = consultationRepository.findById(consultationId)
                 .orElseThrow(() -> new RuntimeException("Consultation non trouvée"));
         
-        // Vérification que le paiement est effectué
         if (!"PAYE".equals(c.getStatutPaiement())) {
             throw new RuntimeException("La facture PDF n'est disponible qu'après paiement");
         }
         
         FactureResponse facture = mapToFactureResponse(c);
-        
-        // Simulation génération PDF (dans la vraie vie : utiliser JasperReports ou OpenPDF)
         logger.info("📄 Génération PDF facture {} pour {}", 
                    facture.getNumeroFacture(), 
                    facture.getPatientNomComplet());
@@ -223,7 +167,7 @@ public class ConsultationServiceImpl implements ConsultationService {
         return facture;
     }
 
-    // Méthode pour obtenir les statistiques de facturation
+    @Override
     public Map<String, Object> getStatistiquesFacturation(Long medecinId, Date debut, Date fin) {
         List<Consultation> consultations = consultationRepository.findByMedecinAndPeriode(medecinId, debut, fin);
         
@@ -246,6 +190,59 @@ public class ConsultationServiceImpl implements ConsultationService {
         
         return stats;
     }
-    
-    
+
+    // ✅ MÉTHODE CORRIGÉE : on utilise rdv.getDate() au lieu de c.getDateConsultation()
+    private ConsultationResponse mapToResponse(Consultation c) {
+        RendezVous rdv = c.getRendezVous();
+        Patient p = rdv.getPatient();
+        Medecin m = rdv.getMedecin();
+        
+        return ConsultationResponse.builder()
+                .id(c.getId())
+                .dateConsultation(rdv.getDate())  // ✅ CORRIGÉ
+                .diagnostic(c.getDiagnostic())
+                .ordonnance(c.getOrdonnance())
+                .traitement(c.getTraitement())
+                .notes(c.getNotes())
+                .prixConsultation(c.getPrixConsultation())
+                .montantMedicaments(c.getMontantMedicaments())
+                .montantTotal(c.getMontantTotal())
+                .statutPaiement(c.getStatutPaiement())
+                .rendezVousId(rdv.getId())
+                .dateRendezVous(rdv.getDate())
+                .heureRendezVous(rdv.getHeure())
+                .patientId(p.getId())
+                .patientNom(p.getNom())
+                .patientPrenom(p.getPrenom())
+                .patientEmail(p.getEmail())
+                .medecinId(m.getId())
+                .medecinNom(m.getNom())
+                .medecinPrenom(m.getPrenom())
+                .medecinSpecialite(m.getSpecialite())
+                .build();
+    }
+
+    // ✅ MÉTHODE CORRIGÉE : on utilise rdv.getDate() au lieu de c.getDateConsultation()
+    private FactureResponse mapToFactureResponse(Consultation c) {
+        RendezVous rdv = c.getRendezVous();
+        Patient p = rdv.getPatient();
+        Medecin m = rdv.getMedecin();
+        
+        return FactureResponse.builder()
+                .consultationId(c.getId())
+                .numeroFacture(FactureResponse.genererNumero(c.getId()))
+                .dateFacture(rdv.getDate())  // ✅ CORRIGÉ
+                .patientNomComplet(p.getNomComplet())
+                .patientEmail(p.getEmail())
+                .patientTel(p.getTel())
+                .medecinNomComplet(m.getNomComplet())
+                .medecinSpecialite(m.getSpecialite())
+                .motifConsultation(rdv.getMotif())
+                .dateRendezVous(rdv.getDate())
+                .prixConsultation(c.getPrixConsultation())
+                .montantMedicaments(c.getMontantMedicaments())
+                .montantTotal(c.getMontantTotal())
+                .statutPaiement(c.getStatutPaiement())
+                .build();
+    }
 }

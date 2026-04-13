@@ -5,12 +5,11 @@ import { FormsModule } from '@angular/forms';
 import { RendezVousService } from '../../../services/rendezvous.service';
 import { AuthService } from '../../../services/auth.service';
 import { RendezVous } from '../../../models/rendezvous.model';
-import { MedecinNavbarComponent } from '../medecin-navbar/medecin-navbar.component';
 
 @Component({
   selector: 'app-rendezvous-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, MedecinNavbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './rendezvous-list.component.html',
   styleUrls: ['./rendezvous-list.component.css']
 })

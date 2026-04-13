@@ -10,7 +10,7 @@ public interface NotificationService {
     // ========== NOTIFICATIONS AU MÉDECIN (actions du patient) ==========
     void notifierNouveauRendezVousMedecin(RendezVous rendezVous);
     void notifierAnnulationRdvParPatient(RendezVous rendezVous);
-    void notifierModificationRdvParPatient(RendezVous rendezVous); // 🔥 AJOUTÉ
+    void notifierModificationRdvParPatient(RendezVous rendezVous);
     
     // ========== NOTIFICATIONS AU PATIENT (actions du médecin) ==========
     void notifierConfirmationRdv(RendezVous rendezVous);

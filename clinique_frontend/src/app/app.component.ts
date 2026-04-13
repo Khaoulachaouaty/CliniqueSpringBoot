@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, OnInit, OnDestroy, effect } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
@@ -8,6 +8,7 @@ import { AdminNavbarComponent } from './views/admin/admin-navbar/admin-navbar.co
 import { MedecinNavbarComponent } from './views/medecin/medecin-navbar/medecin-navbar.component';
 import { AuthService } from './services/auth.service';
 import { PatientNavbarComponent } from "./views/patient/patient-navbar/patient-navbar.component";
+import { NotificationService } from './services/notification.service';
 
 @Component({
   selector: 'app-root',
@@ -20,7 +21,7 @@ import { PatientNavbarComponent } from "./views/patient/patient-navbar/patient-n
     MedecinNavbarComponent,
     FooterComponent,
     PatientNavbarComponent
-],
+  ],
   template: `
     <div class="d-flex flex-column min-vh-100">
       <!-- Navbar publique - UNIQUEMENT si personne n'est connecté -->
@@ -54,7 +55,7 @@ import { PatientNavbarComponent } from "./views/patient/patient-navbar/patient-n
   `,
   styles: [`:host { display: block; }`]
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
   // Computed signals pour la réactivité
   showPublicNavbar = computed(() => {
     const role = this.authService.userRole();
@@ -85,12 +86,54 @@ export class AppComponent {
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private notificationService: NotificationService
   ) {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
       this.currentUrl.set(event.urlAfterRedirects);
     });
+
+    // 🔥 Utiliser 'effect' pour réagir aux changements du signal
+    effect(() => {
+      const isLoggedIn = this.authService.isLoggedIn();
+      if (isLoggedIn) {
+        this.initWebSocketIfLoggedIn();
+      } else {
+        this.notificationService.closeWebSocket();
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    // Initialiser WebSocket si utilisateur déjà connecté
+    this.initWebSocketIfLoggedIn();
+    
+    // Demander la permission pour les notifications du navigateur
+    this.notificationService.requestNotificationPermission();
+  }
+
+  ngOnDestroy(): void {
+    // Fermer WebSocket quand l'app se ferme
+    this.notificationService.closeWebSocket();
+  }
+
+  /**
+   * Initialiser WebSocket si utilisateur connecté
+   */
+  private initWebSocketIfLoggedIn(): void {
+    const isLoggedIn = this.authService.isLoggedIn();
+    const role = this.authService.userRole();
+    
+    if (isLoggedIn && (role === 'PATIENT' || role === 'MEDECIN')) {
+      console.log('🔌 Initialisation WebSocket pour:', role);
+      this.notificationService.initWebSocket();
+      
+      // Rafraîchir les notifications au démarrage
+      setTimeout(() => {
+        this.notificationService.refreshNotifications();
+      }, 1000);
+    }
   }
 }

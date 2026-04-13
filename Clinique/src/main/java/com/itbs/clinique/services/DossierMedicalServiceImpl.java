@@ -1,4 +1,3 @@
-// DossierMedicalServiceImpl.java
 package com.itbs.clinique.services;
 
 import com.itbs.clinique.dto.*;
@@ -32,10 +31,9 @@ public class DossierMedicalServiceImpl implements DossierMedicalService {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new RuntimeException("Patient non trouvé"));
         
-        // Vérifier que le médecin a bien consulté ce patient (sécurité)
         Long vraiMedecinId = getMedecinIdFromUserId(medecinUserId);
         boolean aConsulte = consultationRepository
-                .findByRendezVousPatientIdOrderByDateConsultationDesc(patientId)
+                .findByRendezVousPatientIdOrderByRendezVousDateDesc(patientId)
                 .stream()
                 .anyMatch(c -> c.getRendezVous().getMedecin().getId().equals(vraiMedecinId));
         
@@ -44,8 +42,7 @@ public class DossierMedicalServiceImpl implements DossierMedicalService {
         }
         
         List<Consultation> consultations = consultationRepository
-                .findByRendezVousPatientIdOrderByDateConsultationDesc(patientId);
-        
+                .findByRendezVousPatientIdOrderByRendezVousDateDesc(patientId);
         return DossierMedicalResponse.builder()
                 .patientId(patient.getId())
                 .patientNomComplet(patient.getNomComplet())
@@ -64,18 +61,33 @@ public class DossierMedicalServiceImpl implements DossierMedicalService {
         Medecin medecin = rdv.getMedecin();
         
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        
+        // ✅ LOGIQUE DÉPLACÉE ICI (anciennement dans Patient.ajouterAuDossierMedical)
         String entree = String.format(
-            "Consultation du %s avec Dr. %s (%s)\nDiagnostic: %s\nTraitement: %s\nOrdonnance: %s",
-            sdf.format(consultation.getDateConsultation()),
+            "Consultation du %s avec Dr. %s (%s)\nDiagnostic: %s\nTraitement: %s\nOrdonnance: %s\n---",
+            sdf.format(rdv.getDate()),  // ✅ Utilise la date du RDV
             medecin.getNomComplet(),
             medecin.getSpecialite(),
-            consultation.getDiagnostic(),
-            consultation.getTraitement(),
-            consultation.getOrdonnance()
+            consultation.getDiagnostic() != null ? consultation.getDiagnostic() : "Non spécifié",
+            consultation.getTraitement() != null ? consultation.getTraitement() : "Aucun",
+            consultation.getOrdonnance() != null ? consultation.getOrdonnance() : "Aucune"
         );
         
-        patient.ajouterAuDossierMedical(entree);
+        // Ajouter au dossier existant (le plus récent en premier)
+        String dossierActuel = patient.getDossierMedical();
+        String nouveauDossier;
+        
+        if (dossierActuel == null || dossierActuel.isEmpty()) {
+            nouveauDossier = entree;
+        } else {
+            nouveauDossier = entree + "\n\n" + dossierActuel;
+        }
+        
+        patient.setDossierMedical(nouveauDossier);
         patientRepository.save(patient);
+        
+        // Mettre à jour aussi l'historique des consultations
+        consultationRepository.save(consultation);
     }
     
     private Long getMedecinIdFromUserId(Long userId) {
@@ -84,10 +96,11 @@ public class DossierMedicalServiceImpl implements DossierMedicalService {
                 .orElse(userId);
     }
     
+    // ✅ MÉTHODE CORRIGÉE : utilise rdv.getDate() au lieu de c.getDateConsultation()
     private ConsultationResumeResponse mapToResume(Consultation c) {
         return ConsultationResumeResponse.builder()
                 .id(c.getId())
-                .date(c.getDateConsultation())
+                .date(c.getRendezVous().getDate())  // ✅ CORRIGÉ
                 .medecinNom(c.getRendezVous().getMedecin().getNomComplet())
                 .specialite(c.getRendezVous().getMedecin().getSpecialite())
                 .diagnostic(c.getDiagnostic())

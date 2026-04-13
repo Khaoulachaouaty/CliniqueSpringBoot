@@ -29,7 +29,6 @@ public class Consultation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    private Date dateConsultation;
     private String diagnostic;
     private String ordonnance;
     private String traitement;

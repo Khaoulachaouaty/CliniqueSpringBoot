@@ -16,11 +16,14 @@ public interface ConsultationRepository extends JpaRepository<Consultation, Long
     
     Optional<Consultation> findByRendezVousId(Long rendezVousId);
     
-    List<Consultation> findByRendezVousMedecinIdOrderByDateConsultationDesc(Long medecinId);
+    // ✅ CORRIGÉ : remplacer OrderByDateConsultationDesc par OrderByRendezVousDateDesc
+    List<Consultation> findByRendezVousMedecinIdOrderByRendezVousDateDesc(Long medecinId);
     
-    List<Consultation> findByRendezVousPatientIdOrderByDateConsultationDesc(Long patientId);
+    // ✅ CORRIGÉ : remplacer OrderByDateConsultationDesc par OrderByRendezVousDateDesc
+    List<Consultation> findByRendezVousPatientIdOrderByRendezVousDateDesc(Long patientId);
     
-    @Query("SELECT c FROM Consultation c WHERE c.rendezVous.medecin.id = :medecinId AND c.dateConsultation BETWEEN :debut AND :fin")
+    // ✅ CORRIGÉ : remplacer c.dateConsultation par c.rendezVous.date
+    @Query("SELECT c FROM Consultation c WHERE c.rendezVous.medecin.id = :medecinId AND c.rendezVous.date BETWEEN :debut AND :fin")
     List<Consultation> findByMedecinAndPeriode(@Param("medecinId") Long medecinId, 
                                                 @Param("debut") Date debut, 
                                                 @Param("fin") Date fin);

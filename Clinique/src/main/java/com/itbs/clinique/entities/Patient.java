@@ -41,19 +41,7 @@ public class Patient {
     @OneToMany(mappedBy = "patient")
     private List<RendezVous> rendezVous;
     
-    
- // Dans Patient.java, ajoutez :
-    public void ajouterAuDossierMedical(String entree) {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-        String timestamp = sdf.format(new Date());
-        String nouvelleEntree = String.format("[%s] %s%n%n", timestamp, entree);
-        
-        if (this.dossierMedical == null) {
-            this.dossierMedical = nouvelleEntree;
-        } else {
-            this.dossierMedical = nouvelleEntree + this.dossierMedical;
-        }
-    }
+  
     
     // Méthodes pour accéder aux données du User
     public String getNom() {

@@ -6,12 +6,11 @@ import { RendezVousService } from '../../../services/rendezvous.service';
 import { AuthService } from '../../../services/auth.service';
 import { NotificationService } from '../../../services/notification.service';
 import { RendezVous, Consultation, CalendarEvent } from '../../../models/rendezvous.model';
-import { MedecinNavbarComponent } from '../medecin-navbar/medecin-navbar.component';
 
 @Component({
   selector: 'app-medecin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, MedecinNavbarComponent],
+  imports: [CommonModule, RouterLink],
   template: `
     
     <div class="container-fluid py-4">

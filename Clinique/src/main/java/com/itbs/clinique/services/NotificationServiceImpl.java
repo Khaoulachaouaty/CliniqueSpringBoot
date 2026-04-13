@@ -14,7 +14,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,15 +26,41 @@ public class NotificationServiceImpl implements NotificationService {
     private final RendezVousRepository rendezVousRepository;
     private final PatientRepository patientRepository;
     private final MedecinRepository medecinRepository;
+    
+    // 🔥 NOUVEAU : Injection du service WebSocket
+    private final WebSocketNotificationService webSocketService;
 
     public NotificationServiceImpl(NotificationRepository notificationRepository,
                                     RendezVousRepository rendezVousRepository,
                                     PatientRepository patientRepository,
-                                    MedecinRepository medecinRepository) {
+                                    MedecinRepository medecinRepository,
+                                    WebSocketNotificationService webSocketService) {  // 🔥 AJOUTÉ
         this.notificationRepository = notificationRepository;
         this.rendezVousRepository = rendezVousRepository;
         this.patientRepository = patientRepository;
         this.medecinRepository = medecinRepository;
+        this.webSocketService = webSocketService;  // 🔥 AJOUTÉ
+    }
+
+    // ========== MÉTHODE PRIVÉE POUR CRÉER ET ENVOYER ==========
+    
+    /**
+     * Crée une notification en base de données ET l'envoie en temps réel via WebSocket
+     */
+    private NotificationResponse createAndSendNotification(NotificationRequest request, 
+                                                            Long destinataireId, 
+                                                            String destinataireType) {
+        // 1. Sauvegarder en base de données
+        NotificationResponse saved = createNotification(request);
+        
+        // 2. Envoyer via WebSocket
+        if ("PATIENT".equals(destinataireType)) {
+            webSocketService.envoyerNotificationPatient(destinataireId, saved);
+        } else if ("MEDECIN".equals(destinataireType)) {
+            webSocketService.envoyerNotificationMedecin(destinataireId, saved);
+        }
+        
+        return saved;
     }
 
     // ========== NOTIFICATIONS AU MÉDECIN ==========
@@ -56,7 +81,8 @@ public class NotificationServiceImpl implements NotificationService {
         request.setMessage(message);
         request.setType("NOUVEAU_RDV");
         
-        createNotification(request);
+        // 🔥 Envoi avec WebSocket
+        createAndSendNotification(request, rendezVous.getMedecin().getId(), "MEDECIN");
         
         logger.info("📧 [EMAIL AU MÉDECIN] À {}: {}", 
             rendezVous.getMedecin().getEmail(), message);
@@ -78,7 +104,31 @@ public class NotificationServiceImpl implements NotificationService {
         request.setMessage(message);
         request.setType("ANNULATION_PAR_PATIENT");
         
-        createNotification(request);
+        // 🔥 Envoi avec WebSocket
+        createAndSendNotification(request, rendezVous.getMedecin().getId(), "MEDECIN");
+        
+        logger.info("📧 [EMAIL AU MÉDECIN] À {}: {}", 
+            rendezVous.getMedecin().getEmail(), message);
+    }
+
+    @Override
+    public void notifierModificationRdvParPatient(RendezVous rendezVous) {
+        String message = String.format(
+            "📝 Modification: Le patient %s a modifié son rendez-vous au %s à %s",
+            rendezVous.getPatient().getNomComplet(),
+            new SimpleDateFormat("dd/MM/yyyy").format(rendezVous.getDate()),
+            rendezVous.getHeure()
+        );
+        
+        NotificationRequest request = new NotificationRequest();
+        request.setMedecinId(rendezVous.getMedecin().getId());
+        request.setPatientId(rendezVous.getPatient().getId());
+        request.setRendezVousId(rendezVous.getId());
+        request.setMessage(message);
+        request.setType("MODIFICATION_PAR_PATIENT");
+        
+        // 🔥 Envoi avec WebSocket
+        createAndSendNotification(request, rendezVous.getMedecin().getId(), "MEDECIN");
         
         logger.info("📧 [EMAIL AU MÉDECIN] À {}: {}", 
             rendezVous.getMedecin().getEmail(), message);
@@ -101,7 +151,8 @@ public class NotificationServiceImpl implements NotificationService {
         request.setMessage(message);
         request.setType("CONFIRMATION_RDV");
         
-        createNotification(request);
+        // 🔥 Envoi avec WebSocket
+        createAndSendNotification(request, rendezVous.getPatient().getId(), "PATIENT");
         
         logger.info("📧 [EMAIL AU PATIENT] À {}: {}", 
             rendezVous.getPatient().getEmail(), message);
@@ -123,7 +174,8 @@ public class NotificationServiceImpl implements NotificationService {
         request.setMessage(message);
         request.setType("ANNULATION_PAR_MEDECIN");
         
-        createNotification(request);
+        // 🔥 Envoi avec WebSocket
+        createAndSendNotification(request, rendezVous.getPatient().getId(), "PATIENT");
         
         logger.info("📧 [EMAIL AU PATIENT] À {}: {}", 
             rendezVous.getPatient().getEmail(), message);
@@ -145,9 +197,10 @@ public class NotificationServiceImpl implements NotificationService {
         request.setMessage(message);
         request.setType("RAPPEL_RDV");
         
-        createNotification(request);
+        // 🔥 Envoi avec WebSocket
+        createAndSendNotification(request, rendezVous.getPatient().getId(), "PATIENT");
         
-        // Simulation SMS/Email au PATIENT uniquement
+        // Simulation SMS/Email
         logger.info("📱 [SMS AU PATIENT] À {}: {}", 
             rendezVous.getPatient().getTel(), message);
         logger.info("📧 [EMAIL AU PATIENT] À {}: {}", 
@@ -169,7 +222,8 @@ public class NotificationServiceImpl implements NotificationService {
         request.setMessage(message);
         request.setType("DEMANDE_EN_ATTENTE");
         
-        createNotification(request);
+        // 🔥 Envoi avec WebSocket
+        createAndSendNotification(request, rendezVous.getPatient().getId(), "PATIENT");
         
         logger.info("📧 [EMAIL AU PATIENT] À {}: {}", 
             rendezVous.getPatient().getEmail(), message);
@@ -191,7 +245,8 @@ public class NotificationServiceImpl implements NotificationService {
         request.setMessage(message);
         request.setType("FACTURE");
         
-        createNotification(request);
+        // 🔥 Envoi avec WebSocket
+        createAndSendNotification(request, rdv.getPatient().getId(), "PATIENT");
         
         logger.info("📧 [EMAIL AU PATIENT] À {}: {}", 
             rdv.getPatient().getEmail(), message);
@@ -211,13 +266,14 @@ public class NotificationServiceImpl implements NotificationService {
         request.setMessage(message);
         request.setType("PAIEMENT_RECU");
         
-        createNotification(request);
+        // 🔥 Envoi avec WebSocket
+        createAndSendNotification(request, rdv.getPatient().getId(), "PATIENT");
         
         logger.info("📧 [EMAIL AU PATIENT] À {}: {}", 
             rdv.getPatient().getEmail(), message);
     }
 
-    // ========== CRÉATION MANUELLE ==========
+    // ========== CRÉATION MANUELLE (SANS WEBSOCKET) ==========
 
     @Override
     public NotificationResponse createNotification(NotificationRequest request) {
@@ -228,29 +284,26 @@ public class NotificationServiceImpl implements NotificationService {
         notif.setStatut("NON_LUE");
         notif.setDonnees(request.getDonnees());
         
-        // Patient (peut être null)
         if (request.getPatientId() != null) {
-        	Patient p = patientRepository.getReferenceById(request.getPatientId());
-        	notif.setPatient(p);
+            Patient p = patientRepository.findById(request.getPatientId())
+                    .orElseThrow(() -> new RuntimeException("Patient non trouvé"));
+            notif.setPatient(p);
         }
         
-        // Médecin (peut être null)
         if (request.getMedecinId() != null) {
-            Medecin m = new Medecin();
-            m.setId(request.getMedecinId());
+            Medecin m = medecinRepository.findById(request.getMedecinId())
+                    .orElseThrow(() -> new RuntimeException("Médecin non trouvé"));
             notif.setMedecin(m);
         }
         
-        // Rendez-vous (peut être null)
         if (request.getRendezVousId() != null) {
-            RendezVous rdv = new RendezVous();
-            rdv.setId(request.getRendezVousId());
+            RendezVous rdv = rendezVousRepository.findById(request.getRendezVousId())
+                    .orElseThrow(() -> new RuntimeException("RDV non trouvé"));
             notif.setRendezVous(rdv);
         }
         
         Notification saved = notificationRepository.save(notif);
-        logger.info("🔔 Notification créée: type={}, patient={}, medecin={}", 
-                   request.getType(), request.getPatientId(), request.getMedecinId());
+        logger.info("🔔 Notification créée en BDD: type={}", request.getType());
         
         return mapToResponse(saved);
     }
@@ -349,7 +402,6 @@ public class NotificationServiceImpl implements NotificationService {
         finDemain.set(Calendar.HOUR_OF_DAY, 23);
         finDemain.set(Calendar.MINUTE, 59);
         
-        // Rechercher les RDV de demain
         List<RendezVous> rdvsDemain = rendezVousRepository.findAll().stream()
                 .filter(rdv -> {
                     Date dateRdv = rdv.getDate();
@@ -360,7 +412,6 @@ public class NotificationServiceImpl implements NotificationService {
         
         logger.info("📅 {} rendez-vous confirmés trouvés pour demain", rdvsDemain.size());
         
-        // Envoyer rappel uniquement au PATIENT
         rdvsDemain.forEach(this::notifierRappelRendezVous);
         
         logger.info("✅ Rappels automatiques envoyés aux patients");
@@ -381,27 +432,5 @@ public class NotificationServiceImpl implements NotificationService {
                 .patientNom(n.getPatient() != null ? n.getPatient().getNomComplet() : null)
                 .medecinNom(n.getMedecin() != null ? n.getMedecin().getNomComplet() : null)
                 .build();
-    }
-    
-    @Override
-    public void notifierModificationRdvParPatient(RendezVous rendezVous) {
-        String message = String.format(
-            "📝 Modification: Le patient %s a modifié son rendez-vous au %s à %s",
-            rendezVous.getPatient().getNomComplet(),
-            new SimpleDateFormat("dd/MM/yyyy").format(rendezVous.getDate()),
-            rendezVous.getHeure()
-        );
-        
-        NotificationRequest request = new NotificationRequest();
-        request.setMedecinId(rendezVous.getMedecin().getId());
-        request.setPatientId(rendezVous.getPatient().getId());
-        request.setRendezVousId(rendezVous.getId());
-        request.setMessage(message);
-        request.setType("MODIFICATION_PAR_PATIENT");
-        
-        createNotification(request);
-        
-        logger.info("📧 [EMAIL AU MÉDECIN] À {}: {}", 
-            rendezVous.getMedecin().getEmail(), message);
     }
 }

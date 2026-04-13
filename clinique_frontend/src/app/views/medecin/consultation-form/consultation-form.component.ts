@@ -5,12 +5,11 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { RendezVousService } from '../../../services/rendezvous.service';
 import { AuthService } from '../../../services/auth.service';
 import { Consultation } from '../../../models/rendezvous.model';
-import { MedecinNavbarComponent } from '../medecin-navbar/medecin-navbar.component';
 
 @Component({
   selector: 'app-consultation-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MedecinNavbarComponent],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './consultation-form.component.html',
   styleUrls: ['./consultation-form.component.css']
 })

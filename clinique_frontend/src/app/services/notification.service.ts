@@ -1,5 +1,4 @@
 // services/notification.service.ts
-
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, interval } from 'rxjs';
@@ -8,8 +7,10 @@ import { API_CONFIG } from '../config/api.config';
 import { 
   NotificationResponse, 
   NotificationRequest, 
-  MessageResponse 
+  MessageResponse,
+  NotificationStatut  // 🔥 IMPORTANT : importer l'enum
 } from '../models/notification.model';
+import { WebSocketService } from './websocket.service';
 
 @Injectable({
   providedIn: 'root'
@@ -30,7 +31,71 @@ export class NotificationService {
   public notificationsPatient = this.notificationsPatient$.asObservable();
   public notificationsMedecin = this.notificationsMedecin$.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private webSocketService: WebSocketService
+  ) {}
+
+  // ==================== WEBSOCKET ====================
+
+  initWebSocket(): void {
+    this.webSocketService.connect();
+    
+    this.webSocketService.notifications$.subscribe(notification => {
+      if (notification) {
+        console.log('🎯 Nouvelle notification temps réel:', notification);
+        this.handleRealtimeNotification(notification);
+      }
+    });
+  }
+
+  private handleRealtimeNotification(notification: NotificationResponse): void {
+    const role = localStorage.getItem('userRole');
+    
+    if (role === 'PATIENT') {
+      const currentCount = this.unreadCountPatient$.value;
+      this.unreadCountPatient$.next(currentCount + 1);
+      
+      const currentNotifs = this.notificationsPatient$.value;
+      this.notificationsPatient$.next([notification, ...currentNotifs]);
+      
+      this.showNotificationToast(notification);
+      
+    } else if (role === 'MEDECIN') {
+      const currentCount = this.unreadCountMedecin$.value;
+      this.unreadCountMedecin$.next(currentCount + 1);
+      
+      const currentNotifs = this.notificationsMedecin$.value;
+      this.notificationsMedecin$.next([notification, ...currentNotifs]);
+      
+      this.showNotificationToast(notification);
+    }
+  }
+
+  private showNotificationToast(notification: NotificationResponse): void {
+    console.log(`🔔 [${notification.type}] ${notification.message}`);
+    
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Clinique - Nouvelle notification', {
+        body: notification.message,
+        icon: '/assets/icon.png'
+      });
+    }
+  }
+
+  requestNotificationPermission(): void {
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
+  }
+
+  closeWebSocket(): void {
+    this.webSocketService.disconnect();
+  }
+
+  isWebSocketConnected(): boolean {
+    return this.webSocketService.isConnectedToWebSocket();
+  }
 
   // ==================== CRÉATION ====================
   
@@ -40,20 +105,15 @@ export class NotificationService {
 
   // ==================== PATIENT ====================
 
-getNotificationsByPatient(patientId: number): Observable<NotificationResponse[]> {
-  
-  // 🔥 PROTECTION CONTRE userId
-  const userId = JSON.parse(localStorage.getItem('currentUser') || '{}')?.userId;
-
-  if (patientId === userId) {
-    console.error('❌ ERREUR: userId utilisé au lieu de patientId !', patientId);
+  getNotificationsByPatient(patientId: number): Observable<NotificationResponse[]> {
+    const url = `${this.baseUrl}/patient/${patientId}`;
+    console.log('🚀 Récupération notifications patient:', url);
+    
+    return this.http.get<NotificationResponse[]>(url)
+      .pipe(
+        tap(notifs => this.notificationsPatient$.next(notifs))
+      );
   }
-
-  const url = `${this.baseUrl}/patient/${patientId}`;
-  console.log('🚀 URL FINALE:', url);
-
-  return this.http.get<NotificationResponse[]>(url);
-}
 
   getUnreadNotificationsPatient(patientId: number): Observable<NotificationResponse[]> {
     return this.http.get<NotificationResponse[]>(`${this.baseUrl}/patient/${patientId}/non-lues`);
@@ -67,7 +127,23 @@ getNotificationsByPatient(patientId: number): Observable<NotificationResponse[]>
   }
 
   markAsReadPatient(notificationId: number): Observable<NotificationResponse> {
-    return this.http.put<NotificationResponse>(`${this.baseUrl}/${notificationId}/lue`, {});
+    return this.http.put<NotificationResponse>(`${this.baseUrl}/${notificationId}/lue`, {})
+      .pipe(
+        tap(() => {
+          const currentCount = this.unreadCountPatient$.value;
+          this.unreadCountPatient$.next(Math.max(0, currentCount - 1));
+          
+          const currentNotifs = this.notificationsPatient$.value;
+          const updatedNotifs = currentNotifs.map(n => 
+            n.id === notificationId ? { 
+              ...n, 
+              statut: NotificationStatut.LUE,  // 🔥 Utiliser l'enum
+              dateLecture: new Date().toISOString() 
+            } : n
+          );
+          this.notificationsPatient$.next(updatedNotifs);
+        })
+      );
   }
 
   markAllAsReadPatient(patientId: number): Observable<MessageResponse> {
@@ -75,8 +151,13 @@ getNotificationsByPatient(patientId: number): Observable<NotificationResponse[]>
       .pipe(
         tap(() => {
           this.unreadCountPatient$.next(0);
-          // Rafraîchir la liste
-          this.getNotificationsByPatient(patientId).subscribe();
+          const currentNotifs = this.notificationsPatient$.value;
+          const updatedNotifs = currentNotifs.map(n => ({ 
+            ...n, 
+            statut: NotificationStatut.LUE,  // 🔥 Utiliser l'enum
+            dateLecture: new Date().toISOString() 
+          }));
+          this.notificationsPatient$.next(updatedNotifs);
         })
       );
   }
@@ -102,7 +183,23 @@ getNotificationsByPatient(patientId: number): Observable<NotificationResponse[]>
   }
 
   markAsReadMedecin(notificationId: number): Observable<NotificationResponse> {
-    return this.http.put<NotificationResponse>(`${this.baseUrl}/${notificationId}/lue`, {});
+    return this.http.put<NotificationResponse>(`${this.baseUrl}/${notificationId}/lue`, {})
+      .pipe(
+        tap(() => {
+          const currentCount = this.unreadCountMedecin$.value;
+          this.unreadCountMedecin$.next(Math.max(0, currentCount - 1));
+          
+          const currentNotifs = this.notificationsMedecin$.value;
+          const updatedNotifs = currentNotifs.map(n => 
+            n.id === notificationId ? { 
+              ...n, 
+              statut: NotificationStatut.LUE,  // 🔥 Utiliser l'enum
+              dateLecture: new Date().toISOString() 
+            } : n
+          );
+          this.notificationsMedecin$.next(updatedNotifs);
+        })
+      );
   }
 
   markAllAsReadMedecin(medecinId: number): Observable<MessageResponse> {
@@ -110,12 +207,18 @@ getNotificationsByPatient(patientId: number): Observable<NotificationResponse[]>
       .pipe(
         tap(() => {
           this.unreadCountMedecin$.next(0);
-          this.getNotificationsByMedecin(medecinId).subscribe();
+          const currentNotifs = this.notificationsMedecin$.value;
+          const updatedNotifs = currentNotifs.map(n => ({ 
+            ...n, 
+            statut: NotificationStatut.LUE,  // 🔥 Utiliser l'enum
+            dateLecture: new Date().toISOString() 
+          }));
+          this.notificationsMedecin$.next(updatedNotifs);
         })
       );
   }
 
-  // ==================== POLLING AUTO ====================
+  // ==================== POLLING AUTO (FALLBACK) ====================
 
   startPollingPatient(patientId: number, intervalMs: number = 30000): Observable<number> {
     return interval(intervalMs).pipe(
@@ -151,6 +254,7 @@ getNotificationsByPatient(patientId: number): Observable<NotificationResponse[]>
       'CONFIRMATION_RDV': 'check_circle',
       'ANNULATION_PAR_PATIENT': 'cancel',
       'ANNULATION_PAR_MEDECIN': 'cancel',
+      'MODIFICATION_PAR_PATIENT': 'edit',
       'RAPPEL_RDV': 'alarm',
       'DEMANDE_EN_ATTENTE': 'hourglass_empty',
       'FACTURE': 'receipt',
@@ -165,6 +269,7 @@ getNotificationsByPatient(patientId: number): Observable<NotificationResponse[]>
       'CONFIRMATION_RDV': 'success',
       'ANNULATION_PAR_PATIENT': 'warn',
       'ANNULATION_PAR_MEDECIN': 'warn',
+      'MODIFICATION_PAR_PATIENT': 'accent',
       'RAPPEL_RDV': 'accent',
       'DEMANDE_EN_ATTENTE': 'warning',
       'FACTURE': 'primary',
@@ -178,13 +283,9 @@ getNotificationsByPatient(patientId: number): Observable<NotificationResponse[]>
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     
-    // Moins d'une minute
     if (diff < 60000) return 'À l\'instant';
-    // Moins d'une heure
     if (diff < 3600000) return `Il y a ${Math.floor(diff / 60000)} min`;
-    // Moins de 24h
     if (diff < 86400000) return `Il y a ${Math.floor(diff / 3600000)} h`;
-    // Moins d'une semaine
     if (diff < 604800000) return `Il y a ${Math.floor(diff / 86400000)} j`;
     
     return date.toLocaleDateString('fr-FR', {
@@ -193,5 +294,18 @@ getNotificationsByPatient(patientId: number): Observable<NotificationResponse[]>
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  refreshNotifications(): void {
+    const role = localStorage.getItem('userRole');
+    const userId = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    
+    if (role === 'PATIENT' && userId.patientId) {
+      this.getNotificationsByPatient(userId.patientId).subscribe();
+      this.getUnreadCountPatient(userId.patientId).subscribe();
+    } else if (role === 'MEDECIN' && userId.medecinId) {
+      this.getNotificationsByMedecin(userId.medecinId).subscribe();
+      this.getUnreadCountMedecin(userId.medecinId).subscribe();
+    }
   }
 }
