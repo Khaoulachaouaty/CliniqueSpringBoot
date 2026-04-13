@@ -22,37 +22,7 @@ import { NotificationService } from './services/notification.service';
     FooterComponent,
     PatientNavbarComponent
   ],
-  template: `
-    <div class="d-flex flex-column min-vh-100">
-      <!-- Navbar publique - UNIQUEMENT si personne n'est connecté -->
-      @if (showPublicNavbar()) {
-        <app-navbar />
-      }
-      
-      <!-- Navbar admin - si connecté en tant qu'ADMIN -->
-      @if (showAdminNavbar()) {
-        <app-admin-navbar />
-      }
-      
-      <!-- Navbar médecin - si connecté en tant que MEDECIN -->
-      @if (showMedecinNavbar()) {
-        <app-medecin-navbar />
-      }
-      
-      <!-- Navbar patient - si connecté en tant que PATIENT -->
-      @if (showPatientNavbar()) {
-        <app-patient-navbar />
-      }
-      
-      <main class="flex-fill">
-        <router-outlet />
-      </main>
-      
-      @if (showFooter()) {
-        <app-footer />
-      }
-    </div>
-  `,
+  templateUrl: './app.component.html',
   styles: [`:host { display: block; }`]
 })
 export class AppComponent implements OnInit, OnDestroy {

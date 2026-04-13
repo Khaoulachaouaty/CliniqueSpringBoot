@@ -71,7 +71,8 @@ import { AuthService } from '../../../services/auth.service';
         </div>
       </div>
     </div>
-  `
+  `,
+  styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent {
   specialites = ['Cardiologie', 'Dermatologie', 'Pédiatrie', 'Gynécologie', 

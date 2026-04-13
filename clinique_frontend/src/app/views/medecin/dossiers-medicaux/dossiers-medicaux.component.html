@@ -1,264 +1,137 @@
-<!-- views/medecin/dossiers-medicaux/dossiers-medicaux.component.html -->
-<div class="container-fluid py-4">
-  <h4 class="mb-4 text-success">
-    <i class="bi bi-folder-medical me-2"></i>Dossiers Médicaux
-  </h4>
+<div class="dossier-container">
+  <!-- Header -->
+  <div class="dossier-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h2><i class="bi bi-folder-medical me-2"></i>Dossiers Médicaux</h2>
+      </div>
+      <div class="header-search">
+        <input type="text" class="form-control" placeholder="Rechercher un patient...">
+      </div>
+    </div>
+  </div>
 
-  <div class="row">
-    <!-- Liste des patients -->
-    <div class="col-lg-4" *ngIf="!showConsultationForm">
-      <div class="card shadow-sm">
-        <div class="card-header bg-success text-white">
-          <h6 class="mb-0"><i class="bi bi-people me-2"></i>Mes Patients</h6>
-        </div>
-        <div class="card-body p-0">
-          <div *ngIf="loading" class="text-center py-4">
-            <div class="spinner-border text-success"></div>
+  <!-- Main Content -->
+  <div class="dossier-content">
+    <div class="row g-4">
+      <!-- Patients List -->
+      <div class="col-lg-3">
+        <div class="card card-primary">
+          <div class="card-header">
+            <i class="bi bi-people me-2"></i>Mes Patients
           </div>
-          
-          <div *ngIf="!loading && patients.length === 0" class="text-center py-4 text-muted">
-            <i class="bi bi-inbox fs-1"></i>
-            <p class="mt-2">Aucun patient</p>
-          </div>
-          
-          <div class="list-group list-group-flush" *ngIf="!loading && patients.length > 0">
-            <button 
-              *ngFor="let patient of patients"
-              class="list-group-item list-group-item-action"
-              [class.active]="selectedPatient?.id === patient.id"
-              (click)="selectPatient(patient)">
-              
-              <div class="d-flex align-items-center gap-3">
-                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center"
-                     style="width: 45px; height: 45px; font-size: 1.1rem;">
+          <div class="card-body p-0">
+            <div *ngIf="loading" class="text-center py-4">
+              <div class="spinner"></div>
+            </div>
+
+            <div *ngIf="!loading && patients.length === 0" class="text-center py-4 text-muted">
+              <i class="bi bi-inbox fs-1"></i>
+              <p class="mt-2">Aucun patient</p>
+            </div>
+
+            <div class="patients-list" *ngIf="!loading && patients.length > 0">
+              <div *ngFor="let patient of patients" 
+                   class="patient-item" 
+                   [class.active]="selectedPatient?.id === patient.id"
+                   (click)="selectPatient(patient)">
+                
+                <div class="patient-avatar">
                   {{ patient.prenom.charAt(0) }}{{ patient.nom.charAt(0) }}
                 </div>
-                <div class="text-start">
-                  <h6 class="mb-0">{{ patient.prenom }} {{ patient.nom }}</h6>
-                  <small class="text-muted">{{ patient.email }}</small>
+
+                <div class="patient-info">
+                  <h6>{{ patient.prenom }} {{ patient.nom }}</h6>
+                  <small>{{ patient.email }}</small>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Patient Medical File -->
+      <div class="col-lg-9" *ngIf="selectedPatient">
+        <!-- Patient Summary -->
+        <div class="patient-summary-grid">
+          <div class="summary-card">
+            <div class="summary-icon info">
+              <i class="bi bi-person"></i>
+            </div>
+            <div class="summary-text">
+              <label>Informations</label>
+              <p><strong>{{ selectedPatient.prenom }} {{ selectedPatient.nom }}</strong></p>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <div class="summary-icon warning">
+              <i class="bi bi-exclamation-circle"></i>
+            </div>
+            <div class="summary-text">
+              <label>Allergies</label>
+              <p>À remplir</p>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <div class="summary-icon success">
+              <i class="bi bi-heart-pulse"></i>
+            </div>
+            <div class="summary-text">
+              <label>Maladies Chroniques</label>
+              <p>À remplir</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="dossier-tabs mt-4">
+          <div class="tabs-navigation">
+            <button class="tab-btn active" onclick="switchTab('consultations')">
+              <i class="bi bi-calendar-check me-2"></i>Consultations
+            </button>
+            <button class="tab-btn" onclick="switchTab('prescriptions')">
+              <i class="bi bi-prescription2 me-2"></i>Prescriptions
+            </button>
+            <button class="tab-btn" onclick="switchTab('antecedents')">
+              <i class="bi bi-file-earmark-text me-2"></i>Antécédents
+            </button>
+            <button class="tab-btn" onclick="switchTab('analyses')">
+              <i class="bi bi-beaker me-2"></i>Analyses
             </button>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Dossier du patient sélectionné -->
-    <div class="col-lg-8" *ngIf="selectedPatient && !showConsultationForm">
-      <!-- Info patient -->
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-          <div class="d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center"
-                 style="width: 60px; height: 60px; font-size: 1.3rem;">
-              {{ selectedPatient.prenom.charAt(0) }}{{ selectedPatient.nom.charAt(0) }}
+          <!-- Tab Contents -->
+          <div class="tabs-content">
+            <div id="consultations-tab" class="tab-content active">
+              <div class="empty-state">
+                <i class="bi bi-calendar-check fs-1"></i>
+                <p>Aucune consultation enregistrée</p>
+              </div>
             </div>
-            <div>
-              <h5 class="mb-0">{{ selectedPatient.prenom }} {{ selectedPatient.nom }}</h5>
-              <p class="mb-0 text-muted">
-                <i class="bi bi-envelope me-1"></i>{{ selectedPatient.email }} |
-                <i class="bi bi-telephone me-1"></i>{{ selectedPatient.tel || 'Non renseigné' }}
-              </p>
+
+            <div id="prescriptions-tab" class="tab-content">
+              <div class="empty-state">
+                <i class="bi bi-prescription2 fs-1"></i>
+                <p>Aucune prescription enregistrée</p>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Dossier médical -->
-      <div class="card shadow-sm mb-4" *ngIf="dossierMedical?.dossierMedical">
-        <div class="card-header bg-info text-white">
-          <h6 class="mb-0"><i class="bi bi-file-medical me-2"></i>Dossier Médical</h6>
-        </div>
-        <div class="card-body">
-          <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ dossierMedical?.dossierMedical }}</pre>
-        </div>
-      </div>
+            <div id="antecedents-tab" class="tab-content">
+              <div class="empty-state">
+                <i class="bi bi-file-earmark-text fs-1"></i>
+                <p>Aucun antécédent enregistré</p>
+              </div>
+            </div>
 
-      <!-- Historique des consultations -->
-      <div class="card shadow-sm mb-4" *ngIf="patientConsultations.length > 0">
-        <div class="card-header bg-white">
-          <h6 class="mb-0"><i class="bi bi-clipboard-pulse me-2"></i>Historique des Consultations</h6>
-        </div>
-        <div class="card-body">
-          <div class="timeline">
-            <div 
-              *ngFor="let consultation of patientConsultations" 
-              class="timeline-item border-start border-4 ps-3 pb-4 border-secondary">
-              
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <span class="badge bg-secondary">
-                    {{ consultation.dateConsultation | date:'dd/MM/yyyy' }}
-                  </span>
-                  <h6 class="mt-2 mb-1">Dr. {{ consultation.medecinNom }} {{ consultation.medecinPrenom }}</h6>
-                  <p class="mb-1"><strong>Diagnostic:</strong> {{ consultation.diagnostic }}</p>
-                  <p class="mb-1" *ngIf="consultation.traitement"><strong>Traitement:</strong> {{ consultation.traitement }}</p>
-                  <p class="mb-1"><strong>Montant:</strong> {{ consultation.montantTotal }} DHS</p>
-                  <button class="btn btn-sm btn-outline-primary" (click)="voirFacture(consultation.id)">
-                    <i class="bi bi-receipt me-1"></i>Voir la facture
-                  </button>
-                </div>
+            <div id="analyses-tab" class="tab-content">
+              <div class="empty-state">
+                <i class="bi bi-beaker fs-1"></i>
+                <p>Aucune analyse enregistrée</p>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Rendez-vous du patient -->
-      <div class="card shadow-sm">
-        <div class="card-header bg-white">
-          <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Historique des Rendez-vous</h6>
-        </div>
-        <div class="card-body">
-          <div *ngIf="patientRendezVous.length === 0" class="text-center py-4 text-muted">
-            <i class="bi bi-calendar-x fs-1"></i>
-            <p class="mt-2">Aucun rendez-vous</p>
-          </div>
-          
-          <div class="timeline" *ngIf="patientRendezVous.length > 0">
-            <div 
-              *ngFor="let rdv of patientRendezVous" 
-              class="timeline-item"
-              [class]="'border-start border-4 ps-3 pb-4 ' + 
-                      (rdv.statut === 'TERMINE' ? 'border-secondary' : 
-                       rdv.statut === 'CONFIRME' ? 'border-success' : 
-                       rdv.statut === 'ANNULE' ? 'border-danger' : 
-                       rdv.statut === 'NON_VENU' ? 'border-muted' : 'border-warning')">
-              
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <div class="d-flex gap-2 mb-2">
-                    <span class="badge" [class]="'bg-' + getRdvStatusClass(rdv.statut).replace('text-', '')">
-                      {{ rdv.statut }}
-                    </span>
-                    <span class="badge bg-light text-dark">
-                      {{ rdv.date | date:'dd/MM/yyyy' }} à {{ rdv.heure }}
-                    </span>
-                  </div>
-                  <p class="mb-1"><strong>Motif:</strong> {{ rdv.motif }}</p>
-                  
-                  <!-- Actions selon le statut -->
-                  <div class="btn-group btn-group-sm" *ngIf="rdv.statut !== 'TERMINE' && rdv.statut !== 'ANNULE'">
-                    <button 
-                      *ngIf="canAddConsultation(rdv)"
-                      class="btn btn-success"
-                      (click)="startConsultation(rdv.id)">
-                      <i class="bi bi-clipboard-plus me-1"></i>Consultation
-                    </button>
-                    <button 
-                      *ngIf="canMarkAsNoShow(rdv)"
-                      class="btn btn-outline-secondary"
-                      (click)="markAsNoShow(rdv)">
-                      <i class="bi bi-person-x me-1"></i>Non venu
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Formulaire de consultation -->
-    <div class="col-lg-8" *ngIf="showConsultationForm && selectedRdv">
-      <div class="card shadow-sm">
-        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-          <h6 class="mb-0">
-            <i class="bi bi-clipboard-plus me-2"></i>Nouvelle Consultation
-          </h6>
-          <button class="btn btn-sm btn-light" (click)="cancelConsultation()">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-        <div class="card-body">
-          <div class="alert alert-info mb-4">
-            <strong>Patient:</strong> {{ selectedRdv.patientPrenom }} {{ selectedRdv.patientNom }}<br>
-            <strong>Date RDV:</strong> {{ selectedRdv.date | date:'dd/MM/yyyy' }} à {{ selectedRdv.heure }}<br>
-            <strong>Motif:</strong> {{ selectedRdv.motif }}
-          </div>
-          
-          <form [formGroup]="consultationForm" (ngSubmit)="submitConsultation()">
-            <div class="mb-3">
-              <label class="form-label">Diagnostic *</label>
-              <textarea 
-                class="form-control" 
-                formControlName="diagnostic" 
-                rows="3"
-                placeholder="Entrez le diagnostic..."></textarea>
-              <div *ngIf="consultationForm.get('diagnostic')?.invalid && consultationForm.get('diagnostic')?.touched" 
-                   class="text-danger small">
-                Le diagnostic est requis
-              </div>
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label">Ordonnance</label>
-              <textarea 
-                class="form-control" 
-                formControlName="ordonnance" 
-                rows="3"
-                placeholder="Médicaments prescrits..."></textarea>
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label">Traitement</label>
-              <textarea 
-                class="form-control" 
-                formControlName="traitement" 
-                rows="2"
-                placeholder="Instructions de traitement..."></textarea>
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label">Notes complémentaires</label>
-              <textarea 
-                class="form-control" 
-                formControlName="notes" 
-                rows="2"
-                placeholder="Notes additionnelles..."></textarea>
-            </div>
-            
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Prix consultation (DHS) *</label>
-                <input 
-                  type="number" 
-                  class="form-control" 
-                  formControlName="prix"
-                  placeholder="0.00">
-                <div *ngIf="consultationForm.get('prix')?.invalid && consultationForm.get('prix')?.touched" 
-                     class="text-danger small">
-                  Prix valide requis
-                </div>
-              </div>
-              
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Montant médicaments (DHS)</label>
-                <input 
-                  type="number" 
-                  class="form-control" 
-                  formControlName="montantMedicaments"
-                  placeholder="0.00">
-              </div>
-            </div>
-            
-            <div class="d-flex gap-2">
-              <button 
-                type="submit" 
-                class="btn btn-success"
-                [disabled]="consultationForm.invalid">
-                <i class="bi bi-check-lg me-2"></i>Enregistrer
-              </button>
-              <button 
-                type="button" 
-                class="btn btn-outline-secondary"
-                (click)="cancelConsultation()">
-                <i class="bi bi-x-lg me-2"></i>Annuler
-              </button>
-            </div>
-          </form>
         </div>
       </div>
     </div>

@@ -3,7 +3,6 @@
   "compilerOptions": {
     "outDir": "./out-tsc/app",
     "types": [],
-    "lib": ["es2020", "dom"]   // ← Ajouté pour que TypeScript connaisse 'document'
   },
   "files": [
     "src/main.ts"
