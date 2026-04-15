@@ -267,15 +267,15 @@
 }
 
 .btn-warning {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  background: linear-gradient(135deg, #4c7672 0%, #8bafa1 100%);
   color: white;
   border: none;
 }
 
 .btn-warning:hover {
-  background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+  background: linear-gradient(135deg, #7aa59a 0%, #499a87 100%);
   transform: translateY(-2px);
-  box-shadow: 0 8px 12px -1px rgba(249, 115, 22, 0.3);
+  box-shadow: 0 8px 12px -1px rgba(174, 221, 180, 0.3);
 }
 
 .btn-light {

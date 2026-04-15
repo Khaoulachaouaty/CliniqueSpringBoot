@@ -1,10 +1,12 @@
+// rendezvous-list.component.ts
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RendezVousService } from '../../../services/rendezvous.service';
 import { AuthService } from '../../../services/auth.service';
-import { RendezVous } from '../../../models/rendezvous.model';
+import { RendezVous, Consultation } from '../../../models/rendezvous.model';
 
 @Component({
   selector: 'app-rendezvous-list',
@@ -33,6 +35,17 @@ export class RendezvousListComponent implements OnInit {
   showModal = false;
   modalType: 'confirm' | 'cancel' | 'done' | 'noShow' | null = null;
   selectedRdv: RendezVous | null = null;
+
+  // Formulaire consultation
+  showConsultationForm = false;
+  consultationForm = {
+    diagnostic: '',
+    ordonnance: '',
+    traitement: '',
+    notes: '',
+    prixConsultation: 50,
+    montantMedicaments: 0
+  };
 
   constructor(
     private rdvService: RendezVousService,
@@ -112,12 +125,10 @@ export class RendezvousListComponent implements OnInit {
   }
 
   canTerminer(rdv: RendezVous): boolean {
-    // Date dépassée ET statut confirmé
     return rdv.statut === 'CONFIRME' && this.isDatePassee(rdv);
   }
 
   canMarquerNonVenu(rdv: RendezVous): boolean {
-    // Date dépassée ET statut confirmé
     return rdv.statut === 'CONFIRME' && this.isDatePassee(rdv);
   }
 
@@ -130,12 +141,32 @@ export class RendezvousListComponent implements OnInit {
   openModal(type: 'confirm' | 'cancel' | 'done' | 'noShow', rdv: RendezVous): void {
     this.modalType = type;
     this.selectedRdv = rdv;
-    this.showModal = true;
+    
+    if (type === 'done') {
+      // Pré-remplir le formulaire
+      this.consultationForm = {
+        diagnostic: '',
+        ordonnance: '',
+        traitement: '',
+        notes: '',
+        prixConsultation: 50,
+        montantMedicaments: 0
+      };
+      this.showConsultationForm = true;
+      this.showModal = false;
+    } else {
+      this.showModal = true;
+    }
   }
 
   closeModal(): void {
     this.showModal = false;
     this.modalType = null;
+    this.selectedRdv = null;
+  }
+
+  closeConsultationForm(): void {
+    this.showConsultationForm = false;
     this.selectedRdv = null;
   }
 
@@ -149,16 +180,52 @@ export class RendezvousListComponent implements OnInit {
       case 'cancel':
         this.annulerRdv();
         break;
-      case 'done':
-        this.terminerRdv();
-        break;
       case 'noShow':
         this.marquerNonVenu();
         break;
     }
   }
 
-  // ============ ACTIONS ============
+  // ============ TERMINER AVEC FORMULAIRE ============
+
+  submitConsultation(): void {
+    if (!this.selectedRdv || !this.currentUserId) return;
+
+    // 1. Créer la consultation
+    const consultationData = {
+      diagnostic: this.consultationForm.diagnostic,
+      ordonnance: this.consultationForm.ordonnance,
+      traitement: this.consultationForm.traitement,
+      notes: this.consultationForm.notes,
+      prixConsultation: this.consultationForm.prixConsultation,
+      montantMedicaments: this.consultationForm.montantMedicaments
+    };
+
+    this.rdvService.createConsultation(this.selectedRdv.id, consultationData).subscribe({
+      next: (consultation) => {
+        // 2. Mettre à jour le statut du RDV
+        this.rdvService.updateStatus(this.selectedRdv!.id, 'TERMINE', this.currentUserId!).subscribe({
+          next: (updated) => {
+            this.selectedRdv!.statut = updated.statut;
+            this.updateView();
+            
+            // 3. Rediriger vers la facture
+            this.router.navigate(['/medecin/facture', consultation.id]);
+          },
+          error: (err) => {
+            console.error('Erreur mise à jour statut:', err);
+            alert('Erreur lors de la mise à jour du statut');
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Erreur création consultation:', err);
+        alert('Erreur: ' + (err.error?.message || err.message));
+      }
+    });
+  }
+
+  // ============ AUTRES ACTIONS ============
 
   private confirmerRdv(): void {
     this.rdvService.updateStatus(this.selectedRdv!.id, 'CONFIRME', this.currentUserId!).subscribe({
@@ -166,6 +233,7 @@ export class RendezvousListComponent implements OnInit {
         this.selectedRdv!.statut = updated.statut;
         this.updateView();
         this.closeModal();
+        this.showNotification('Rendez-vous confirmé avec succès', 'success');
       },
       error: (err) => {
         alert('Erreur: ' + (err.error?.message || err.message));
@@ -180,24 +248,7 @@ export class RendezvousListComponent implements OnInit {
         this.selectedRdv!.statut = updated.statut;
         this.updateView();
         this.closeModal();
-      },
-      error: (err) => {
-        alert('Erreur: ' + (err.error?.message || err.message));
-        this.closeModal();
-      }
-    });
-  }
-
-  private terminerRdv(): void {
-    // 1. Mettre à jour le statut
-    this.rdvService.updateStatus(this.selectedRdv!.id, 'TERMINE', this.currentUserId!).subscribe({
-      next: (updated) => {
-        this.selectedRdv!.statut = updated.statut;
-        this.updateView();
-        this.closeModal();
-        
-        // 2. Créer consultation et rediriger
-        this.creerConsultationEtRediriger();
+        this.showNotification('Rendez-vous annulé avec succès', 'warning');
       },
       error: (err) => {
         alert('Erreur: ' + (err.error?.message || err.message));
@@ -212,6 +263,7 @@ export class RendezvousListComponent implements OnInit {
         this.selectedRdv!.statut = updated.statut;
         this.updateView();
         this.closeModal();
+        this.showNotification('Patient marqué comme non venu', 'info');
       },
       error: (err) => {
         alert('Erreur: ' + (err.error?.message || err.message));
@@ -225,19 +277,10 @@ export class RendezvousListComponent implements OnInit {
     this.applyFilter();
   }
 
-  private creerConsultationEtRediriger(): void {
-    // Redirection vers le formulaire de consultation
-    this.router.navigate(['/medecin/consultation/new'], {
-      queryParams: {
-        patientId: this.selectedRdv!.patientId,
-        rdvId: this.selectedRdv!.id,
-        patientNom: this.selectedRdv!.patientNom,
-        patientPrenom: this.selectedRdv!.patientPrenom,
-        date: this.selectedRdv!.date,
-        heure: this.selectedRdv!.heure,
-        motif: this.selectedRdv!.motif
-      }
-    });
+  private showNotification(message: string, type: string): void {
+    // Toast notification
+    console.log(`[${type}] ${message}`);
+    // Implémenter un toast si nécessaire
   }
 
   // ============ NAVIGATION ============
@@ -248,13 +291,7 @@ export class RendezvousListComponent implements OnInit {
         this.router.navigate(['/medecin/consultation', consultation.id]);
       },
       error: () => {
-        // Si pas de consultation existante, créer nouvelle
-        this.router.navigate(['/medecin/consultation/new'], {
-          queryParams: {
-            patientId: rdv.patientId,
-            rdvId: rdv.id
-          }
-        });
+        alert('Aucune consultation trouvée pour ce rendez-vous');
       }
     });
   }
@@ -315,7 +352,6 @@ export class RendezvousListComponent implements OnInit {
     const titles: { [key: string]: string } = {
       'confirm': 'Confirmer le rendez-vous',
       'cancel': 'Annuler le rendez-vous',
-      'done': 'Terminer la consultation',
       'noShow': 'Patient non venu'
     };
     return titles[this.modalType || ''] || 'Confirmation';
@@ -325,7 +361,6 @@ export class RendezvousListComponent implements OnInit {
     const icons: { [key: string]: string } = {
       'confirm': 'bi-check-circle',
       'cancel': 'bi-x-circle',
-      'done': 'bi-file-medical',
       'noShow': 'bi-person-x'
     };
     return icons[this.modalType || ''] || 'bi-question-circle';
@@ -335,7 +370,6 @@ export class RendezvousListComponent implements OnInit {
     const colors: { [key: string]: string } = {
       'confirm': 'success',
       'cancel': 'danger',
-      'done': 'primary',
       'noShow': 'secondary'
     };
     return colors[this.modalType || ''] || 'primary';
@@ -352,8 +386,6 @@ export class RendezvousListComponent implements OnInit {
         return `Confirmer le rendez-vous de <strong>${patient}</strong> prévu le <strong>${dateHeure}</strong> ?`;
       case 'cancel':
         return `Annuler le rendez-vous de <strong>${patient}</strong> prévu le <strong>${dateHeure}</strong> ?<br><span class="text-danger small">Le patient sera notifié.</span>`;
-      case 'done':
-        return `Le patient <strong>${patient}</strong> est venu à son rendez-vous du <strong>${dateHeure}</strong>.<br><br>La consultation va être créée et vous allez accéder au formulaire de saisie.`;
       case 'noShow':
         return `Confirmer que <strong>${patient}</strong> n'est pas venu à son rendez-vous du <strong>${dateHeure}</strong> ?`;
       default:
@@ -365,7 +397,6 @@ export class RendezvousListComponent implements OnInit {
     const texts: { [key: string]: string } = {
       'confirm': 'Confirmer',
       'cancel': 'Annuler',
-      'done': 'Terminer & Créer consultation',
       'noShow': 'Marquer non venu'
     };
     return texts[this.modalType || ''] || 'Confirmer';

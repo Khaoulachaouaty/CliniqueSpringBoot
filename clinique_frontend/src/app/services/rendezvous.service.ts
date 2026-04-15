@@ -78,14 +78,18 @@ updateStatus(rendezVousId: number, statut: string, medecinId: number): Observabl
   );
 }
 
-// ❌ SUPPRIMER updateStatusWithReason complètement
 
 
-  getCalendarEvents(medecinId: number, start: string, end: string): Observable<CalendarEvent[]> {
-    return this.http.get<CalendarEvent[]>(`${this.API_URL}/rendezvous/medecin/${medecinId}/calendar`, {
-      params: { start, end }
-    });
-  }
+  // rendezvous.service.ts - AJOUTEZ CETTE MÉTHODE
+
+getCalendarEvents(medecinId: number, startDate: string, endDate: string): Observable<CalendarEvent[]> {
+  return this.http.get<CalendarEvent[]>(`${this.API_URL}/rendezvous/medecin/${medecinId}/calendar`, {
+    params: {
+      start: startDate,
+      end: endDate
+    }
+  });
+}
 
   // ============================================
   // CRÉNEAUX
@@ -152,6 +156,18 @@ updateStatus(rendezVousId: number, statut: string, medecinId: number): Observabl
     return this.http.get<Consultation[]>(`${this.API_URL}/consultations/patient/${patientId}`);
   }
 
+  terminerConsultationComplet(rdvId: number, medecinId: number, consultationData: any): Observable<any> {
+  return this.http.post(`${this.API_URL}/consultations/terminer`, {
+    rendezVousId: rdvId,
+    medecinId: medecinId,
+    ...consultationData
+  });
+}
+
+getOrCreateConsultation(rdvId: number): Observable<Consultation> {
+  return this.http.get<Consultation>(`${this.API_URL}/consultations/rendezvous/${rdvId}/or-create`);
+}
+
   // ============================================
   // FACTURATION
   // ============================================
@@ -189,4 +205,13 @@ updateStatus(rendezVousId: number, statut: string, medecinId: number): Observabl
       params: { medecinId: medecinId.toString() }
     });
   }
+
+  getRendezVousEntreDates(medecinId: number, startDate: string, endDate: string): Observable<RendezVous[]> {
+  return this.http.get<RendezVous[]>(`${this.API_URL}/rendezvous/medecin/${medecinId}/period`, {
+    params: { 
+      start: startDate,
+      end: endDate 
+    }
+  });
+}
 }

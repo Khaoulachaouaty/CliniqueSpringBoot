@@ -1,42 +1,83 @@
-<div class="container-fluid py-4">
-  <h4 class="mb-4 text-success">
-    <i class="bi bi-people me-2"></i>Mes Patients
-  </h4>
+<div class="patients-container">
+  <div class="container-fluid py-4 px-4">
+    <!-- En-tête -->
+    <div class="patients-header mb-4">
+      <div class="header-left">
+        <div class="header-icon">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <div>
+          <h2 class="mb-0">Mes Patients</h2>
+          <p class="text-muted mb-0 small">Consultez et gérez vos patients</p>
+        </div>
+      </div>
+      <div class="header-right" *ngIf="!loading && patients.length > 0">
+        <div class="patients-stats">
+          <span class="stats-number">{{ patients.length }}</span>
+          <span class="stats-label">patients</span>
+        </div>
+      </div>
+    </div>
 
-  <div *ngIf="loading" class="text-center py-5">
-    <div class="spinner-border text-success"></div>
-  </div>
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-wrapper">
+      <div class="spinner-modern">
+        <div class="spinner-ring"></div>
+      </div>
+      <p class="mt-3 text-muted">Chargement des patients...</p>
+    </div>
 
-  <div *ngIf="!loading && patients.length === 0" class="alert alert-info">
-    <i class="bi bi-info-circle me-2"></i>Aucun patient trouvé
-  </div>
+    <!-- Aucun patient -->
+    <div *ngIf="!loading && patients.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <i class="bi bi-people"></i>
+      </div>
+      <h5>Aucun patient</h5>
+      <p class="text-muted">Aucun patient n'est associé à votre compte</p>
+    </div>
 
-  <div class="row g-4" *ngIf="!loading && patients.length > 0">
-    <div class="col-md-6 col-lg-4" *ngFor="let patient of patients">
-      <div class="card h-100 shadow-sm border-0">
-        <div class="card-body">
-          <div class="d-flex align-items-center gap-3 mb-3">
-            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold"
-                 style="width: 60px; height: 60px; font-size: 1.3rem;">
-              {{ patient.prenom.charAt(0) }}{{ patient.nom.charAt(0) }}
+    <!-- Grille patients -->
+    <div class="row g-4" *ngIf="!loading && patients.length > 0">
+      <div class="col-xl-3 col-lg-4 col-md-6" *ngFor="let patient of patients">
+        <div class="patient-card">
+          <!-- Badge RDV -->
+          <div class="rdv-badge">
+            <i class="bi bi-calendar-check"></i>
+            <span>{{ patient.nbRdv }} RDV</span>
+          </div>
+
+          <!-- Avatar -->
+          <div class="patient-avatar">
+            <span>{{ patient.prenom?.charAt(0) || '' }}{{ patient.nom?.charAt(0) || '' }}</span>
+          </div>
+
+          <!-- Infos -->
+          <div class="patient-info">
+            <h5 class="patient-name">{{ patient.prenom }} {{ patient.nom }}</h5>
+            <p class="patient-email">{{ patient.email }}</p>
+          </div>
+
+          <!-- Détails -->
+          <div class="patient-details">
+            <div class="detail-item">
+              <i class="bi bi-telephone-fill"></i>
+              <span>{{ patient.tel || 'Non renseigné' }}</span>
             </div>
-            <div>
-              <h5 class="mb-0">{{ patient.prenom }} {{ patient.nom }}</h5>
-              <small class="text-muted">{{ patient.email }}</small>
+            <div class="detail-item" *ngIf="patient.dernierRdv">
+              <i class="bi bi-calendar-check-fill"></i>
+              <span>Dernier RDV: {{ patient.dernierRdv | date:'dd/MM/yyyy' }}</span>
             </div>
           </div>
-          
-          <div class="d-flex justify-content-between text-muted small mb-3">
-            <span><i class="bi bi-calendar me-1"></i>{{ patient.nbRdv }} RDV</span>
-            <span><i class="bi bi-telephone me-1"></i>{{ patient.tel || 'N/A' }}</span>
-          </div>
-          
-          <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-success flex-fill" (click)="viewDossier(patient.id)">
-              <i class="bi bi-folder-open me-1"></i>Dossier
+
+          <!-- Actions -->
+          <div class="patient-actions">
+            <button class="btn-dossier" (click)="viewDossier(patient.id)">
+              <i class="bi bi-folder-open"></i>
+              Dossier
             </button>
-            <button class="btn btn-sm btn-outline-success" (click)="nouveauRdv(patient.id)">
+            <button class="btn-rdv" (click)="nouveauRdv(patient.id)">
               <i class="bi bi-calendar-plus"></i>
+              RDV
             </button>
           </div>
         </div>

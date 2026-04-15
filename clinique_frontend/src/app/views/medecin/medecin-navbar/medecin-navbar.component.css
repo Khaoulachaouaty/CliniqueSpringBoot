@@ -13,12 +13,57 @@
   z-index: 1030;
 }
 
-/* Logo Container */
+/* Logo Container */z
 .brand-text {
   display: flex;
   flex-direction: column;
   line-height: 1.2;
   gap: 0.125rem;
+}
+
+/* Logo médecin - Version bleue */
+.medecin-logo {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: white;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navbar-brand:hover .medecin-logo {
+  transform: scale(1.08) rotate(-5deg);
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  gap: 0.125rem;
+}
+
+.brand-text .fw-bold {
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: white;
+  letter-spacing: -0.5px;
+}
+
+.brand-text .brand-role {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
 }
 
 .brand-text .brand-name {
