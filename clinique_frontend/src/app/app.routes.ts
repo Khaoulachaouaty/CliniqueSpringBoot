@@ -13,13 +13,11 @@ export const routes: Routes = [
     loadComponent: () => import('./views/shared/landing/landing.component')
       .then(m => m.LandingComponent)
   },
-  
   {
     path: 'login',
     loadComponent: () => import('./views/auth/login/login.component')
       .then(m => m.LoginComponent)
   },
-  
   {
     path: 'register',
     loadComponent: () => import('./views/auth/register-patient/register-patient.component')
@@ -94,7 +92,6 @@ export const routes: Routes = [
         loadComponent: () => import('./views/medecin/notification-medecin/notification-medecin.component')
           .then(m => m.NotificationMedecinComponent)
       },
-      // 🔥 ROUTES CONSULTATION AJOUTÉES
       {
         path: 'consultation/new',
         loadComponent: () => import('./views/medecin/consultation-form/consultation-form.component')
@@ -146,7 +143,18 @@ export const routes: Routes = [
       {
         path: 'notifications',
         loadComponent: () => import('./views/patient/notifications/notifications.component')
-          .then(m => m.NotificationsComponent)
+          .then(m => m.NotificationPatientComponent)
+      },
+      // ✅ ROUTES CORRIGÉES
+      {
+        path: 'paiements',
+        loadComponent: () => import('./views/patient/patient-paiement/patient-paiement.component')
+          .then(m => m.PatientPaiementComponent)
+      },
+      {
+        path: 'facture/:id',
+        loadComponent: () => import('./views/patient/facture-view-patient/facture-view-patient.component')
+          .then(m => m.FactureViewPatientComponent)
       }
     ]
   },

@@ -2,6 +2,7 @@
 
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { RendezVousService } from '../../../services/rendezvous.service';
 import { AuthService } from '../../../services/auth.service';
@@ -12,7 +13,7 @@ declare var bootstrap: any;
 @Component({
   selector: 'app-calendrier-rdv',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './calendrier-rdv.component.html',
   styleUrls: ['./calendrier-rdv.component.css']
 })
@@ -31,6 +32,19 @@ export class CalendrierRdvComponent implements OnInit, AfterViewInit {
   selectedRdv: RendezVous | null = null;
   selectedRdvToCancel: RendezVous | null = null;
   selectedRdvToMarkNoShow: RendezVous | null = null;
+  
+  // Formulaire consultation
+  showConsultationForm = false;
+  savingConsultation = false;
+  consultationForm = {
+    diagnostic: '',
+    ordonnance: '',
+    traitement: '',
+    notes: '',
+    prixConsultation: 50,
+    montantMedicaments: 0,
+    statutPaiement: 'EN_ATTENTE' as 'EN_ATTENTE' | 'PAYE'
+  };
   
   Math = Math;
 
@@ -436,14 +450,83 @@ export class CalendrierRdvComponent implements OnInit, AfterViewInit {
       return;
     }
     
-    this.selectedRdv = rdv;
-    this.router.navigate(['/medecin/dossiers'], { 
-      queryParams: { 
-        patientId: rdv.patientId,
+    // Navigate to consultation-form page with query parameters
+    this.router.navigate(['/medecin/consultation/new'], {
+      queryParams: {
         rdvId: rdv.id,
-        action: 'consultation'
+        patientId: rdv.patientId,
+        patientNom: rdv.patientNom,
+        patientPrenom: rdv.patientPrenom,
+        date: rdv.date,
+        heure: rdv.heure,
+        motif: rdv.motif
       }
     });
+  }
+
+  submitConsultation(): void {
+    if (!this.selectedRdv || !this.currentUserId) return;
+    
+    // Validation
+    if (!this.consultationForm.diagnostic.trim()) {
+      alert('Le diagnostic est obligatoire');
+      return;
+    }
+
+    this.savingConsultation = true;
+
+    // 1. Créer la consultation
+    const consultationData = {
+      diagnostic: this.consultationForm.diagnostic,
+      ordonnance: this.consultationForm.ordonnance,
+      traitement: this.consultationForm.traitement,
+      notes: this.consultationForm.notes,
+      prixConsultation: this.consultationForm.prixConsultation,
+      montantMedicaments: this.consultationForm.montantMedicaments,
+      statutPaiement: this.consultationForm.statutPaiement as 'EN_ATTENTE' | 'PAYE'
+    };
+
+    this.rdvService.createConsultation(this.selectedRdv.id, consultationData).subscribe({
+      next: (consultation) => {
+        // 2. Mettre à jour le statut du RDV
+        this.rdvService.updateStatus(this.selectedRdv!.id, 'TERMINE', this.currentUserId!).subscribe({
+          next: (updated) => {
+            this.selectedRdv!.statut = updated.statut;
+            const index = this.allRendezVous.findIndex(r => r.id === this.selectedRdv!.id);
+            if (index !== -1) this.allRendezVous[index].statut = updated.statut;
+            
+            this.savingConsultation = false;
+            this.closeConsultationForm();
+            this.loadRendezVous();
+            
+            this.showNotification('success', 'Consultation enregistrée et facture générée');
+          },
+          error: (err) => {
+            console.error('Erreur mise à jour statut:', err);
+            this.savingConsultation = false;
+            this.showNotification('error', 'Erreur lors de la mise à jour du statut');
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Erreur création consultation:', err);
+        this.savingConsultation = false;
+        this.showNotification('error', 'Erreur: ' + (err.error?.message || err.message));
+      }
+    });
+  }
+
+  closeConsultationForm(): void {
+    this.showConsultationForm = false;
+    this.selectedRdv = null;
+  }
+
+  getMontantTotal(): number {
+    return (this.consultationForm.prixConsultation || 0) + (this.consultationForm.montantMedicaments || 0);
+  }
+
+  getInitials(prenom: string, nom: string): string {
+    return (prenom?.charAt(0) || '') + (nom?.charAt(0) || '');
   }
 
   // ==================== NOTIFICATIONS ====================

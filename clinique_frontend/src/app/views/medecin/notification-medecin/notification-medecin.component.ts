@@ -1,11 +1,11 @@
 // notification-medecin.component.ts
-
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 import { NotificationService } from '../../../services/notification.service';
 import { AuthService } from '../../../services/auth.service';
-import { NotificationResponse, NotificationType, NotificationStatut } from '../../../models/notification.model';
+import { NotificationResponse, NotificationStatut } from '../../../models/notification.model';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-notification-medecin',
@@ -15,149 +15,124 @@ import { NotificationResponse, NotificationType, NotificationStatut } from '../.
   styleUrls: ['./notification-medecin.component.css']
 })
 export class NotificationMedecinComponent implements OnInit, OnDestroy {
-  
+
+  @ViewChild('notificationDropdown') notificationDropdown!: ElementRef;
+
+  isNotificationsOpen = false;
+  unreadCount = 0;
   notifications: NotificationResponse[] = [];
-  unreadCount: number = 0;
-  loading: boolean = false;
-  showDropdown: boolean = false;
-  
-  private medecinId: number | null = null;  // 🔥 ID médecin spécifique
-  private subscriptions: Subscription[] = [];
+  currentUserId: number | null = null;
+
+  private destroy$ = new Subject<void>();
 
   constructor(
+    private router: Router,
     private notificationService: NotificationService,
     private authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    // 🔥 UTILISER getMedecinId()
-    this.medecinId = this.authService.getMedecinId();
-    
-    console.log('👤 User complet:', this.authService.currentUser());
-    console.log('🩺 Médecin ID:', this.medecinId);
-    
-    if (this.medecinId) {
+    this.currentUserId = this.authService.getMedecinId();
+    if (this.currentUserId) {
+      console.log('🔔 Notification Component - ID Médecin:', this.currentUserId);
+      
+      // ✅ S'abonner aux changements du compteur
+      this.notificationService.unreadCountMedecin
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(count => {
+          console.log('📊 Compteur mis à jour:', count);
+          this.unreadCount = count;
+        });
+
+      // ✅ S'abonner aux changements de la liste
+      this.notificationService.notificationsMedecin
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(notifs => {
+          console.log('📋 Liste notifications mise à jour:', notifs?.length);
+          this.notifications = notifs?.slice(0, 5) || [];
+        });
+
+      // Chargement initial
       this.loadNotifications();
-      this.startPolling();
-    } else {
-      console.error('❌ Aucun ID médecin disponible');
-      // Fallback
-      const userId = this.authService.getCurrentUserId();
-      if (userId) {
-        console.log('⚠️ Fallback sur userId:', userId);
-        this.medecinId = userId;
-        this.loadNotifications();
-        this.startPolling();
-      }
     }
   }
 
   ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadNotifications(): void {
-    if (!this.medecinId) return;
+    if (!this.currentUserId) return;
     
-    this.loading = true;
-    
-    const subNotifs = this.notificationService
-      .getNotificationsByMedecin(this.medecinId)
-      .subscribe({
-        next: (notifs) => {
-          this.notifications = notifs;
-          this.loading = false;
-        },
-        error: (err) => {
-          console.error('Erreur chargement:', err);
-          this.loading = false;
-        }
-      });
-
-    const subCount = this.notificationService
-      .getUnreadCountMedecin(this.medecinId)
-      .subscribe({
-        next: (count) => this.unreadCount = count,
-        error: (err) => console.error('Erreur compteur:', err)
-      });
-
-    this.subscriptions.push(subNotifs, subCount);
+    console.log('🔄 Chargement initial des notifications...');
+    this.notificationService.getNotificationsByMedecin(this.currentUserId).subscribe();
+    this.notificationService.getUnreadCountMedecin(this.currentUserId).subscribe();
   }
 
-  startPolling(): void {
-    if (!this.medecinId) return;
-    
-    const sub = this.notificationService
-      .startPollingMedecin(this.medecinId, 30000)
-      .subscribe(count => this.unreadCount = count);
-    
-    this.subscriptions.push(sub);
-  }
-
-  toggleDropdown(): void {
-    this.showDropdown = !this.showDropdown;
-    if (this.showDropdown && this.medecinId) {
-      this.loadNotifications();
-    }
-  }
-
-  markAsRead(notification: NotificationResponse, event: Event): void {
+  toggleNotifications(event: Event): void {
     event.stopPropagation();
+    this.isNotificationsOpen = !this.isNotificationsOpen;
     
-    this.notificationService.markAsReadMedecin(notification.id).subscribe({
-      next: () => {
-        notification.statut = NotificationStatut.LUE;
-        this.unreadCount = Math.max(0, this.unreadCount - 1);
-      },
-      error: (err) => console.error('Erreur mark read:', err)
-    });
-  }
-
-  markAllAsRead(): void {
-    if (!this.medecinId) return;
-    
-    this.notificationService.markAllAsReadMedecin(this.medecinId).subscribe({
-      next: () => {
-        this.unreadCount = 0;
-        this.notifications.forEach(n => n.statut = NotificationStatut.LUE);
-      },
-      error: (err) => console.error('Erreur mark all:', err)
-    });
-  }
-
-  closeDropdown(): void {
-    this.showDropdown = false;
-  }
-
-  getIcon(type: string): string {
-    return this.notificationService.getIconForType(type);
-  }
-
-  getColor(type: string): string {
-    return this.notificationService.getColorForType(type);
-  }
-
-  formatDate(date: string): string {
-    return this.notificationService.formatDate(date);
-  }
-
-  getTypeLabel(type: NotificationType | string): string {
-    const labels: { [key: string]: string } = {
-      'NOUVEAU_RDV': 'Nouveau rendez-vous',
-      'CONFIRMATION_RDV': 'Rendez-vous confirmé',
-      'ANNULATION_PAR_PATIENT': 'Annulation patient',
-      'ANNULATION_PAR_MEDECIN': 'Annulation médecin',
-      'RAPPEL_RDV': 'Rappel',
-      'DEMANDE_EN_ATTENTE': 'Demande en attente',
-      'FACTURE': 'Nouvelle facture',
-      'PAIEMENT_RECU': 'Paiement reçu'
-    };
-    return labels[type as string] || type;
-  }
-
-  goToRendezVous(notification: NotificationResponse): void {
-    if (notification.rendezVousId) {
-      this.closeDropdown();
+    if (this.isNotificationsOpen) {
+      // Recharger au moment de l'ouverture
+      this.notificationService.getNotificationsByMedecin(this.currentUserId!).subscribe();
     }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.notificationDropdown?.nativeElement &&
+        !this.notificationDropdown.nativeElement.contains(event.target)) {
+      this.isNotificationsOpen = false;
+    }
+  }
+
+  onNotificationClick(notification: NotificationResponse): void {
+    if (notification.statut === NotificationStatut.NON_LUE && notification.id) {
+      this.notificationService.markAsReadMedecin(notification.id).subscribe();
+    }
+    
+    this.redirectBasedOnType(notification);
+    this.isNotificationsOpen = false;
+  }
+
+  redirectBasedOnType(notification: NotificationResponse): void {
+    const type = notification.type;
+    if (type === 'RAPPEL_RDV' || type === 'NOUVEAU_RDV' || 
+        type === 'ANNULATION_PAR_PATIENT' || type === 'ANNULATION_PAR_MEDECIN' || 
+        type === 'CONFIRMATION_RDV') {
+      this.router.navigate(['/medecin/rendezvous']);
+    } else if (type === 'FACTURE' || type === 'PAIEMENT_RECU') {
+      this.router.navigate(['/medecin/dashboard']);
+    } else {
+      this.router.navigate(['/medecin/notifications']);
+    }
+  }
+
+  markAllAsRead(event: Event): void {
+    event.stopPropagation();
+    if (!this.currentUserId) return;
+    
+    this.notificationService.markAllAsReadMedecin(this.currentUserId).subscribe();
+  }
+
+  viewAllNotifications(event: Event): void {
+    event.stopPropagation();
+    this.isNotificationsOpen = false;
+    this.router.navigate(['/medecin/notifications']);
+  }
+
+  getNotificationIcon(type: string): string {
+    const icons: { [key: string]: string } = {
+      'NOUVEAU_RDV': 'bi-calendar-plus-fill',
+      'CONFIRMATION_RDV': 'bi-check-circle-fill',
+      'ANNULATION_PAR_PATIENT': 'bi-x-circle-fill',
+      'ANNULATION_PAR_MEDECIN': 'bi-x-circle-fill',
+      'RAPPEL_RDV': 'bi-clock-fill',
+      'FACTURE': 'bi-receipt',
+      'PAIEMENT_RECU': 'bi-cash-coin'
+    };
+    return icons[type] || 'bi-bell-fill';
   }
 }

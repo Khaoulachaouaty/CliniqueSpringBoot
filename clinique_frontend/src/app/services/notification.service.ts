@@ -220,15 +220,14 @@ export class NotificationService {
 
   // ==================== POLLING AUTO (FALLBACK) ====================
 
-  startPollingPatient(patientId: number, intervalMs: number = 30000): Observable<number> {
-    return interval(intervalMs).pipe(
-      switchMap(() => this.getUnreadCountPatient(patientId)),
-      catchError(err => {
-        console.error('Erreur polling notifications patient:', err);
-        return this.unreadCountPatient$;
-      })
-    );
-  }
+startPollingPatient(patientId: number): void {
+  console.log('🔄 Démarrage polling patient toutes les 30 secondes');
+  interval(30000).subscribe(() => {
+    console.log('📡 Polling patient...');
+    this.getUnreadCountPatient(patientId).subscribe();
+    this.getNotificationsByPatient(patientId).subscribe();
+  });
+}
 
   startPollingMedecin(medecinId: number, intervalMs: number = 30000): Observable<number> {
     return interval(intervalMs).pipe(
@@ -308,4 +307,7 @@ export class NotificationService {
       this.getUnreadCountMedecin(userId.medecinId).subscribe();
     }
   }
+
+
+  
 }

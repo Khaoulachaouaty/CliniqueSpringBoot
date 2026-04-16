@@ -17,76 +17,85 @@ export class WebSocketService {
   private userId: number | null = null;
   private userRole: string | null = null;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private maxReconnectAttempts = 10;
 
   constructor(private authService: AuthService) {}
 
-  connect(): void {
-    if (this.isConnected) {
-      console.log('WebSocket déjà connecté');
-      return;
-    }
+// services/websocket.service.ts - Version simplifiée
 
-    this.userId = this.authService.getEffectiveId();
-    this.userRole = this.authService.getCurrentRole();
-    
-    if (!this.userId || !this.userRole) {
-      console.warn('⚠️ Impossible de se connecter au WebSocket');
-      return;
-    }
-
-    if (this.userRole === 'ADMIN') {
-      return;
-    }
-
-    console.log(`🔌 Connexion WebSocket pour ${this.userRole} ID: ${this.userId}`);
-
-    // ✅ WebSocket natif - pas de SockJS
-    const wsUrl = `ws://localhost:8082/clinique/ws-notifications/websocket`;
-    this.ws = new WebSocket(wsUrl);
-
-    this.ws.onopen = () => {
-      console.log('✅ WebSocket connecté');
-      this.isConnected = true;
-      this.reconnectAttempts = 0;
-      this.sendSubscription();
-    };
-
-    this.ws.onerror = (error) => {
-      console.error('❌ Erreur WebSocket:', error);
-    };
-
-    this.ws.onclose = () => {
-      console.log('🔌 WebSocket déconnecté');
-      this.isConnected = false;
-      this.handleReconnect();
-    };
-
-    this.ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('🔔 Message reçu:', data);
-        
-        // Si c'est une notification
-        if (data.type === 'notification') {
-          this.notificationSubject.next(data.content);
-        } else {
-          this.notificationSubject.next(data);
-        }
-      } catch (error) {
-        console.error('Erreur parsing:', error);
-      }
-    };
+connect(): void {
+  if (this.isConnected) {
+    console.log('WebSocket déjà connecté');
+    return;
   }
+
+  this.userId = this.authService.getEffectiveId();
+  this.userRole = this.authService.getCurrentRole();
+  
+  if (!this.userId || !this.userRole) {
+    console.warn('⚠️ Impossible de se connecter au WebSocket');
+    return;
+  }
+
+  if (this.userRole === 'ADMIN') {
+    return;
+  }
+
+  console.log(`🔌 Connexion WebSocket pour ${this.userRole} ID: ${this.userId}`);
+
+  // ✅ Utiliser SockJS pour plus de compatibilité
+  const wsUrl = `ws://localhost:8082/clinique/ws-notifications/websocket`;
+  this.ws = new WebSocket(wsUrl);
+
+  this.ws.onopen = () => {
+    console.log('✅ WebSocket connecté');
+    this.isConnected = true;
+    this.reconnectAttempts = 0;
+    this.sendSubscription();
+  };
+
+  this.ws.onerror = (error) => {
+    console.error('❌ Erreur WebSocket:', error);
+  };
+
+  this.ws.onclose = () => {
+    console.log('🔌 WebSocket déconnecté');
+    this.isConnected = false;
+    this.handleReconnect();
+  };
+
+  this.ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      console.log('🔔 Message WebSocket reçu:', data);
+      
+      // ✅ Extraire la notification
+      let notification = null;
+      if (data.type === 'notification' && data.content) {
+        notification = data.content;
+      } else if (data.id && data.message) {
+        notification = data;
+      }
+      
+      if (notification) {
+        console.log('🎯 Notification extraite, envoi au subject');
+        this.notificationSubject.next(notification);
+      }
+    } catch (error) {
+      console.error('Erreur parsing:', error);
+    }
+  };
+}
 
   private sendSubscription(): void {
     if (!this.ws || !this.isConnected) return;
     
-    // Message d'abonnement
+    // ✅ Abonnement STOMP
     const subscribeMsg = {
-      type: 'subscribe',
+      type: 'SUBSCRIBE',
       destination: `/user/${this.userId}/queue/notifications`
     };
+    console.log('📡 Envoi abonnement:', subscribeMsg);
     this.ws.send(JSON.stringify(subscribeMsg));
   }
 

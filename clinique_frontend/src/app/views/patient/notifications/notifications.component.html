@@ -1,85 +1,58 @@
-<div class="container mt-4">
+<div class="notification-container" #notificationDropdown>
+  <button 
+    class="btn-notification" 
+    type="button"
+    (click)="toggleNotifications($event)"
+    [class.has-unread]="unreadCount > 0"
+    title="Notifications">
+    <i class="bi bi-bell-fill"></i>
+    <span class="notification-badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+  </button>
 
-  <!-- HEADER -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4>🔔 Mes Notifications</h4>
-
-    <div>
-      <span *ngIf="unreadCount > 0" class="badge bg-danger me-2">
-        {{ unreadCount }} non lues
-      </span>
-
-      <button class="btn btn-sm btn-outline-primary" (click)="markAllAsRead()">
-        Tout marquer comme lu
-      </button>
-    </div>
-  </div>
-
-  <!-- FILTRES -->
-  <div class="mb-3">
-    <button class="btn btn-sm me-2"
-            [class.btn-primary]="activeFilter === 'ALL'"
-            [class.btn-outline-primary]="activeFilter !== 'ALL'"
-            (click)="setFilter('ALL')">
-      Toutes
-    </button>
-
-    <button class="btn btn-sm me-2"
-            [class.btn-primary]="activeFilter === 'NON_LUE'"
-            [class.btn-outline-primary]="activeFilter !== 'NON_LUE'"
-            (click)="setFilter('NON_LUE')">
-      Non lues
-    </button>
-
-    <button class="btn btn-sm"
-            [class.btn-primary]="activeFilter === 'LUE'"
-            [class.btn-outline-primary]="activeFilter !== 'LUE'"
-            (click)="setFilter('LUE')">
-      Lues
-    </button>
-  </div>
-
-  <!-- LISTE -->
-  <div *ngIf="filteredNotifications.length > 0; else emptyState">
-
-    <div *ngFor="let notif of filteredNotifications"
-         class="card mb-2 shadow-sm"
-         [ngClass]="{'border-primary': notif.statut === 'NON_LUE'}">
-
-      <div class="card-body d-flex align-items-start">
-
-        <!-- ICON -->
-        <i class="bi me-3 fs-4"
-           [ngClass]="getNotificationIcon(notif.type)"></i>
-
-        <!-- CONTENT -->
-        <div class="flex-grow-1">
-          <h6 class="mb-1">{{ getNotificationTitle(notif.type) }}</h6>
-          <p class="mb-1">{{ notif.message }}</p>
-
-          <small class="text-muted">
-            {{ formatDate(notif.dateEnvoi) }}
-          </small>
-        </div>
-
-        <!-- ACTION -->
-        <button *ngIf="notif.statut === 'NON_LUE'"
-                class="btn btn-sm btn-outline-success"
-                (click)="markAsRead(notif.id!)">
-          ✔
+  <div class="dropdown-menu notification-menu" [class.show]="isNotificationsOpen">
+    <div class="notification-header">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-bell-fill text-primary fs-5"></i>
+        <h6 class="m-0 fw-bold">Notifications</h6>
+        <span class="badge bg-primary rounded-pill" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+      </div>
+      <div class="notification-actions">
+        <button class="btn-action btn-mark-all" (click)="markAllAsRead($event)" *ngIf="unreadCount > 0" title="Tout marquer comme lu">
+          <i class="bi bi-check2-all"></i>
         </button>
-
       </div>
     </div>
 
-  </div>
-
-  <!-- EMPTY -->
-  <ng-template #emptyState>
-    <div class="text-center text-muted mt-5">
-      <i class="bi bi-bell fs-1"></i>
-      <p>Aucune notification</p>
+    <div class="notification-list" *ngIf="notifications.length > 0; else noNotifications">
+      <div *ngFor="let notif of notifications" class="notification-item"
+           [class.unread]="notif.statut === 'NON_LUE'"
+           (click)="onNotificationClick(notif)">
+        <div class="notification-icon" [class]="'type-' + (notif.type | lowercase)">
+          <i class="bi" [class]="getNotificationIcon(notif.type)"></i>
+        </div>
+        <div class="notification-content">
+          <p class="notification-text">{{ notif.message }}</p>
+          <span class="notification-time">
+            <i class="bi bi-clock me-1"></i>{{ notif.dateEnvoi | date:'dd/MM/yyyy HH:mm' }}
+          </span>
+        </div>
+        <div class="unread-indicator" *ngIf="notif.statut === 'NON_LUE'">
+          <i class="bi bi-circle-fill"></i>
+        </div>
+      </div>
     </div>
-  </ng-template>
 
+    <ng-template #noNotifications>
+      <div class="notification-empty">
+        <i class="bi bi-bell-slash"></i>
+        <p>Aucune notification</p>
+      </div>
+    </ng-template>
+
+    <div class="notification-footer" *ngIf="notifications.length > 0">
+      <a href="javascript:void(0)" (click)="viewAllNotifications($event)">
+        <i class="bi bi-arrow-right-circle me-1"></i>Voir toutes les notifications
+      </a>
+    </div>
+  </div>
 </div>

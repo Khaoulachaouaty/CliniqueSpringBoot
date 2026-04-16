@@ -189,4 +189,6 @@ getEffectiveId(): number | null {
     const user = this._currentUser();
     return user?.userId || null;
   }
+
+  
 }

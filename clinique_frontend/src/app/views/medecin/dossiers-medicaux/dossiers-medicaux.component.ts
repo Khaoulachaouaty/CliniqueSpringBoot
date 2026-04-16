@@ -1,15 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { RendezVousService } from '../../../services/rendezvous.service';
 import { AuthService } from '../../../services/auth.service';
-import { Consultation, DossierMedicalResponse, RendezVous } from '../../../models/rendezvous.model';
+import { Consultation, DossierMedicalResponse } from '../../../models/rendezvous.model';
 
 @Component({
   selector: 'app-dossiers-medicaux',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './dossiers-medicaux.component.html',
   styleUrls: ['./dossiers-medicaux.component.css']
 })
@@ -17,41 +17,31 @@ export class DossiersMedicauxComponent implements OnInit {
   
   patients: any[] = [];
   selectedPatient: any = null;
-  patientRendezVous: RendezVous[] = [];
   patientConsultations: Consultation[] = [];
   dossierMedical: DossierMedicalResponse | null = null;
   loading = false;
-  showConsultationForm = false;
-  selectedRdv: RendezVous | null = null;
-  consultationForm: FormGroup;
+  updating = false;
+  editingDossier = false;
   currentUserId: number | null = null;
+  searchTerm: string = '';
+  activeTab: string = 'consultations';
+  
+  // Texte du dossier médical (champ de la table patient)
+  dossierText: string = '';
+  
+  // Modal détails consultation
+  showDetailModal: boolean = false;
+  selectedConsultation: Consultation | null = null;
 
   constructor(
-    private fb: FormBuilder,
     private rdvService: RendezVousService,
     private authService: AuthService,
-    private route: ActivatedRoute
-  ) {
-    this.consultationForm = this.fb.group({
-      diagnostic: ['', Validators.required],
-      ordonnance: [''],
-      traitement: [''],
-      notes: [''],
-      prix: [0, [Validators.required, Validators.min(0)]],
-      montantMedicaments: [0, [Validators.min(0)]]
-    });
-  }
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-    this.currentUserId = this.authService.getCurrentUserId();
+    this.currentUserId = this.authService.getMedecinId();
     this.loadPatients();
-    
-    // Vérifier si on arrive d'un RDV pour consultation
-    this.route.queryParams.subscribe(params => {
-      if (params['patientId'] && params['rdvId'] && params['action'] === 'consultation') {
-        this.startConsultation(parseInt(params['rdvId']));
-      }
-    });
   }
 
   loadPatients(): void {
@@ -59,8 +49,7 @@ export class DossiersMedicauxComponent implements OnInit {
     
     this.loading = true;
     this.rdvService.getRendezVousByMedecin(this.currentUserId).subscribe({
-      next: (rdvs: RendezVous[]) => {
-        // Extraire les patients uniques
+      next: (rdvs: any[]) => {
         const patientMap = new Map();
         rdvs.forEach(rdv => {
           if (!patientMap.has(rdv.patientId)) {
@@ -80,21 +69,27 @@ export class DossiersMedicauxComponent implements OnInit {
     });
   }
 
-  selectPatient(patient: any): void {
-    this.selectedPatient = patient;
-    this.loadPatientHistory(patient.id);
+  get filteredPatients(): any[] {
+    if (!this.searchTerm) return this.patients;
+    const term = this.searchTerm.toLowerCase();
+    return this.patients.filter(p => 
+      p.nom.toLowerCase().includes(term) || 
+      p.prenom.toLowerCase().includes(term) ||
+      p.email.toLowerCase().includes(term)
+    );
   }
 
-  loadPatientHistory(patientId: number): void {
-    // Charger les RDV du patient
-    this.rdvService.getRendezVousByPatient(patientId).subscribe({
-      next: (rdvs: RendezVous[]) => {
-        this.patientRendezVous = rdvs.filter(rdv => rdv.medecinId === this.currentUserId)
-                                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      }
-    });
+  selectPatient(patient: any): void {
+    this.selectedPatient = patient;
+    this.activeTab = 'consultations';
+    this.editingDossier = false;
+    this.loadPatientData(patient.id);
+  }
 
-    // Charger les consultations du patient
+  loadPatientData(patientId: number): void {
+    if (!this.currentUserId) return;
+    
+    // Charger les consultations
     this.rdvService.getConsultationsByPatient(patientId).subscribe({
       next: (consultations: Consultation[]) => {
         this.patientConsultations = consultations.filter(c => c.medecinId === this.currentUserId)
@@ -102,127 +97,92 @@ export class DossiersMedicauxComponent implements OnInit {
       }
     });
 
-    // Charger le dossier médical
-    if (this.currentUserId) {
-      this.rdvService.consulterDossierMedical(patientId, this.currentUserId).subscribe({
-        next: (dossier: DossierMedicalResponse) => {
-          this.dossierMedical = dossier;
-        },
-        error: (err) => {
-          console.error('Erreur chargement dossier médical:', err);
-        }
-      });
-    }
-  }
-
-  startConsultation(rdvId: number): void {
-    const rdv = this.patientRendezVous.find(r => r.id === rdvId);
-    if (rdv) {
-      this.selectedRdv = rdv;
-      this.showConsultationForm = true;
-    }
-  }
-
-  submitConsultation(): void {
-    if (this.consultationForm.invalid || !this.selectedRdv) return;
-    
-    const consultationData = {
-      diagnostic: this.consultationForm.value.diagnostic,
-      ordonnance: this.consultationForm.value.ordonnance,
-      traitement: this.consultationForm.value.traitement,
-      notes: this.consultationForm.value.notes,
-      prixConsultation: this.consultationForm.value.prix,
-      montantMedicaments: this.consultationForm.value.montantMedicaments || 0
-    };
-    
-    this.rdvService.createConsultation(this.selectedRdv.id, consultationData).subscribe({
-      next: (consultation: Consultation) => {
-        // ✅ CORRECTION : Mettre à jour le statut du RDV avec medecinId
-        if (this.currentUserId) {
-          this.rdvService.updateStatus(this.selectedRdv!.id, 'TERMINE', this.currentUserId).subscribe({
-            next: () => {
-              // Réinitialiser le formulaire
-              this.consultationForm.reset();
-              this.showConsultationForm = false;
-              this.selectedRdv = null;
-              
-              // Recharger l'historique
-              if (this.selectedPatient) {
-                this.loadPatientHistory(this.selectedPatient.id);
-              }
-              
-              alert('Consultation enregistrée avec succès !');
-            },
-            error: (err) => {
-              console.error('Erreur mise à jour statut RDV:', err);
-            }
-          });
-        }
+    // Charger le dossier médical (champ de la table patient)
+    this.rdvService.consulterDossierMedical(patientId, this.currentUserId).subscribe({
+      next: (dossier: DossierMedicalResponse) => {
+        this.dossierMedical = dossier;
+        this.dossierText = dossier?.dossierMedical || '';
       },
       error: (err) => {
-        console.error('Erreur création consultation:', err);
-        alert('Erreur lors de l\'enregistrement de la consultation');
+        console.error('Erreur chargement dossier médical:', err);
+        this.dossierMedical = null;
+        this.dossierText = '';
       }
     });
   }
 
-  cancelConsultation(): void {
-    this.showConsultationForm = false;
-    this.selectedRdv = null;
-    this.consultationForm.reset();
-  }
+  // ============ GESTION DU DOSSIER MÉDICAL (table patient) ============
 
-  getRdvStatusClass(statut: string): string {
-    switch (statut) {
-      case 'CONFIRME': return 'text-success';
-      case 'EN_ATTENTE': return 'text-warning';
-      case 'ANNULE': return 'text-danger';
-      case 'TERMINE': return 'text-secondary';
-      case 'NON_VENU': return 'text-muted';
-      default: return 'text-info';
-    }
-  }
-
-  canAddConsultation(rdv: RendezVous): boolean {
-    return rdv.statut === 'CONFIRME';
-  }
-
-  canMarkAsNoShow(rdv: RendezVous): boolean {
-    // Peut marquer "non venu" si le RDV est confirmé et dans le passé
-    const rdvDate = new Date(rdv.date);
-    const today = new Date();
-    return rdv.statut === 'CONFIRME' && rdvDate < today;
-  }
-
-  // ✅ AJOUTÉ : Méthode markAsNoShow manquante
-  markAsNoShow(rdv: RendezVous): void {
-    if (!this.currentUserId) return;
+  saveDossierMedical(): void {
+    if (!this.selectedPatient || !this.currentUserId) return;
     
-    if (confirm(`Marquer le rendez-vous de ${rdv.patientPrenom} ${rdv.patientNom} comme "Non venu" ?`)) {
-      this.rdvService.updateStatus(rdv.id, 'NON_VENU', this.currentUserId).subscribe({
-        next: (updated) => {
-          rdv.statut = updated.statut;
-          alert('Statut mis à jour : Non venu');
-        },
-        error: (err) => {
-          console.error('Erreur mise à jour statut:', err);
-          alert('Erreur lors de la mise à jour du statut');
-        }
-      });
-    }
+    this.updating = true;
+    
+    this.rdvService.updateDossierMedical(this.selectedPatient.id, this.currentUserId, this.dossierText).subscribe({
+      next: (dossier: DossierMedicalResponse) => {
+        this.dossierMedical = dossier;
+        this.dossierText = dossier?.dossierMedical || '';
+        this.editingDossier = false;
+        this.updating = false;
+        alert('Dossier médical mis à jour avec succès');
+      },
+      error: (err) => {
+        console.error('Erreur mise à jour dossier:', err);
+        this.updating = false;
+        alert('Erreur lors de la mise à jour du dossier médical');
+      }
+    });
   }
+
+  cancelEditDossier(): void {
+    this.editingDossier = false;
+    this.dossierText = this.dossierMedical?.dossierMedical || '';
+  }
+
+  // ============ MODAL DÉTAILS CONSULTATION ============
+
+  openDetailModal(consultation: Consultation): void {
+    this.selectedConsultation = consultation;
+    this.showDetailModal = true;
+  }
+
+  closeDetailModal(): void {
+    this.showDetailModal = false;
+    this.selectedConsultation = null;
+  }
+
+  // ============ ACTIONS ============
 
   voirFacture(consultationId: number): void {
-    // Navigation vers la facture ou ouverture modal
-    this.rdvService.genererFacture(consultationId).subscribe({
-      next: (facture) => {
-        console.log('Facture:', facture);
-        // TODO: Afficher la facture dans un modal ou naviguer vers une page de facture
-        alert(`Facture N° ${facture.numeroFacture}\nMontant: ${facture.montantTotal} DHS\nStatut: ${facture.statutPaiement}`);
-      },
-      error: (err) => {
-        console.error('Erreur chargement facture:', err);
-      }
+    if (consultationId) {
+      this.router.navigate(['/medecin/facture', consultationId]);
+    }
+  }
+
+  nouvelleConsultation(): void {
+    this.router.navigate(['/medecin/rendezvous'], {
+      queryParams: { patientId: this.selectedPatient?.id, action: 'new' }
     });
+  }
+
+  // ============ HELPERS ============
+
+  getInitials(prenom: string, nom: string): string {
+    return (prenom?.charAt(0) || '') + (nom?.charAt(0) || '');
+  }
+
+  formatMontant(montant: number): string {
+    return new Intl.NumberFormat('fr-TN', {
+      style: 'currency',
+      currency: 'TND'
+    }).format(montant || 0);
+  }
+
+  getPaiementStatusClass(statut: string): string {
+    return statut === 'PAYE' ? 'badge-success' : 'badge-warning';
+  }
+
+  getPaiementStatusLabel(statut: string): string {
+    return statut === 'PAYE' ? 'Payé' : 'En attente';
   }
 }

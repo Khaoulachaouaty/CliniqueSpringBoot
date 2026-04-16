@@ -2,14 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RendezVousService } from '../../../services/rendezvous.service';
-import { MedecinNavbarComponent } from '../medecin-navbar/medecin-navbar.component';
 
 @Component({
   selector: 'app-consultation-detail',
   standalone: true,
-  imports: [CommonModule, MedecinNavbarComponent],
+  imports: [CommonModule],
   template: `
-    <app-medecin-navbar></app-medecin-navbar>
     <div class="container py-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="text-primary">Détail Consultation #{{ consultationId }}</h2>

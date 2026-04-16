@@ -1,1 +1,173 @@
-<p>mon-dossier works!</p>
+<div class="dossier-patient-container">
+  <div class="container-fluid px-4 py-4">
+    
+    <!-- En-tête -->
+    <div class="dossier-header mb-4">
+      <div class="header-left">
+        <div class="header-icon">
+          <i class="bi bi-folder-medical"></i>
+        </div>
+        <div>
+          <h2>Mon Dossier Médical</h2>
+          <p>Consultez votre historique médical et vos informations</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-wrapper">
+      <div class="spinner-modern">
+        <div class="spinner-ring"></div>
+      </div>
+      <p class="mt-3 text-muted">Chargement de votre dossier...</p>
+    </div>
+
+    <!-- Contenu -->
+    <div *ngIf="!loading" class="row g-4">
+      
+      <!-- Carte informations patient -->
+      <div class="col-lg-4">
+        <div class="info-card">
+          <div class="card-header-custom">
+            <i class="bi bi-person-circle"></i>
+            <h5>Informations personnelles</h5>
+          </div>
+          <div class="card-body-custom">
+            <div class="patient-avatar-large">
+              {{ getInitials(user?.prenom, user?.nom) }}
+            </div>
+            <div class="info-row">
+              <span class="info-label">Nom complet</span>
+              <span class="info-value">{{ user?.prenom }} {{ user?.nom }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Email</span>
+              <span class="info-value">{{ user?.email }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Téléphone</span>
+              <span class="info-value">{{ user?.tel || 'Non renseigné' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onglets -->
+      <div class="col-lg-8">
+        <div class="main-card">
+          <div class="tabs-navigation">
+            <button class="tab-btn" [class.active]="activeTab === 'consultations'" (click)="activeTab = 'consultations'">
+              <i class="bi bi-clock-history"></i> Consultations
+            </button>
+            <button class="tab-btn" [class.active]="activeTab === 'dossier'" (click)="activeTab = 'dossier'">
+              <i class="bi bi-file-text"></i> Dossier médical
+            </button>
+          </div>
+
+          <div class="tabs-content">
+            
+            <!-- ==================== ONGLET CONSULTATIONS ==================== -->
+            <div class="tab-content" *ngIf="activeTab === 'consultations'">
+              <div *ngIf="consultations.length === 0" class="empty-state">
+                <i class="bi bi-calendar-x"></i>
+                <p>Aucune consultation enregistrée</p>
+              </div>
+
+              <div class="consultations-list" *ngIf="consultations.length > 0">
+                <div *ngFor="let consultation of consultations" class="consultation-item">
+                  
+                  <div class="consultation-date">
+                    <span class="day">{{ consultation.dateConsultation | date:'dd' }}</span>
+                    <span class="month">{{ consultation.dateConsultation | date:'MMM' | uppercase }}</span>
+                    <span class="year">{{ consultation.dateConsultation | date:'yyyy' }}</span>
+                  </div>
+
+                  <div class="consultation-details">
+                    <div class="consultation-header">
+                      <h6>
+                        <i class="bi bi-person-badge"></i>
+                        Dr. {{ consultation.medecinPrenom }} {{ consultation.medecinNom }}
+                      </h6>
+                      <span class="specialite-badge">{{ consultation.medecinSpecialite }}</span>
+                    </div>
+
+                    <div class="consultation-diagnostic">
+                      <strong>Diagnostic:</strong> {{ consultation.diagnostic }}
+                    </div>
+
+                    <div class="consultation-info" *ngIf="consultation.traitement">
+                      <i class="bi bi-capsule"></i>
+                      <span><strong>Traitement:</strong> {{ consultation.traitement }}</span>
+                    </div>
+
+                    <div class="consultation-info" *ngIf="consultation.ordonnance">
+                      <i class="bi bi-prescription2"></i>
+                      <span><strong>Ordonnance:</strong> {{ consultation.ordonnance }}</span>
+                    </div>
+
+                    <div class="consultation-footer">
+                      <div class="price">
+                        <i class="bi bi-cash-stack"></i>
+                        {{ formatMontant(consultation.montantTotal || consultation.prixConsultation) }}
+                      </div>
+                      <span class="status-badge" [class]="consultation.statutPaiement === 'PAYE' ? 'paid' : 'pending'">
+                        <i class="bi" [class.bi-check-circle-fill]="consultation.statutPaiement === 'PAYE'" 
+                                     [class.bi-clock-fill]="consultation.statutPaiement !== 'PAYE'"></i>
+                        {{ consultation.statutPaiement === 'PAYE' ? 'Payé' : 'En attente' }}
+                      </span>
+                      <button class="btn-payment" 
+                              *ngIf="consultation.statutPaiement === 'EN_ATTENTE'"
+                              (click)="payerFacture(consultation)">
+                        <i class="bi bi-credit-card"></i> Payer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ==================== ONGLET DOSSIER MÉDICAL ==================== -->
+            <div class="tab-content" *ngIf="activeTab === 'dossier'">
+              <div class="dossier-card">
+                <div class="dossier-header-card">
+                  <div class="dossier-title">
+                    <i class="bi bi-file-text"></i>
+                    <h4>Mon Dossier Médical</h4>
+                    <span class="dossier-info">Antécédents, allergies, traitements de fond</span>
+                  </div>
+                  <button class="btn-edit" *ngIf="!editingDossier" (click)="editingDossier = true" [disabled]="updating">
+                    <i class="bi bi-pencil"></i> Modifier
+                  </button>
+                </div>
+
+                <!-- Mode visualisation -->
+                <div *ngIf="!editingDossier" class="dossier-content-view">
+                  <div class="dossier-field">
+                    <pre>{{ dossierText || 'Aucune information médicale enregistrée' }}</pre>
+                  </div>
+                </div>
+
+                <!-- Mode édition -->
+                <div *ngIf="editingDossier" class="dossier-content-edit">
+                  <textarea [(ngModel)]="dossierText" 
+                            class="form-control" 
+                            rows="10"
+                            placeholder="=== ANTÉCÉDENTS MÉDICAUX ===&#10;- Hypertension artérielle (2018)&#10;- Diabète type 2 (2020)&#10;&#10;=== ALLERGIES ===&#10;- Pénicilline (allergie sévère)&#10;- Arachides&#10;&#10;=== TRAITEMENTS EN COURS ===&#10;- Ramipril 5mg/jour&#10;- Metformine 500mg x2/jour"></textarea>
+                  <div class="edit-actions">
+                    <button class="btn-cancel" (click)="cancelEditDossier()" [disabled]="updating">Annuler</button>
+                    <button class="btn-save" (click)="saveDossierMedical()" [disabled]="updating">
+                      <i class="bi" [class.bi-save]="!updating" [class.bi-hourglass-split]="updating"></i>
+                      {{ updating ? 'Enregistrement...' : 'Enregistrer' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

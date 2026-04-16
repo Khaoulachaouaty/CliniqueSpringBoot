@@ -33,9 +33,9 @@ export class ConsultationFormComponent implements OnInit {
   
   // Étapes du wizard
   currentStep = 1;
-  totalSteps = 3;
+  totalSteps = 4;
   
-  // Consultation créée (après sauvegarde)
+  // Consultation créée
   consultationCreee: any = null;
 
   constructor(
@@ -46,17 +46,17 @@ export class ConsultationFormComponent implements OnInit {
     private route: ActivatedRoute
   ) {
     this.consultationForm = this.fb.group({
-      // Étape 1: Consultation
+      // Étape 1: Diagnostic
       diagnostic: ['', [Validators.required, Validators.minLength(10)]],
-      ordonnance: [''],
-      traitement: [''],
       notes: [''],
       
-      // Étape 2: Facturation
-      prixConsultation: [0, [Validators.required, Validators.min(0)]],
-      montantMedicaments: [0, [Validators.min(0)]],
+      // Étape 2: Traitement
+      traitement: [''],
+      ordonnance: [''],
       
-      // Étape 3: Paiement
+      // Étape 3: Facturation
+      prixConsultation: [50, [Validators.required, Validators.min(1)]],
+      montantMedicaments: [0, [Validators.min(0)]],
       statutPaiement: ['EN_ATTENTE', Validators.required]
     });
   }
@@ -76,7 +76,7 @@ export class ConsultationFormComponent implements OnInit {
       
       if (!this.rdvId || !this.patientId) {
         alert('Erreur: Informations du rendez-vous manquantes');
-        this.router.navigate(['/medecin/rendez-vous']);
+        this.router.navigate(['/medecin/rendezvous']);
       }
     });
     
@@ -86,34 +86,60 @@ export class ConsultationFormComponent implements OnInit {
     });
   }
 
+  getInitials(prenom: string, nom: string): string {
+    return (prenom?.charAt(0) || '') + (nom?.charAt(0) || '');
+  }
+
   // ============ NAVIGATION WIZARD ============
 
   nextStep(): void {
-    if (this.currentStep === 1 && this.isStep1Valid()) {
-      this.currentStep++;
-    } else if (this.currentStep === 2 && this.isStep2Valid()) {
-      this.currentStep++;
+    if (this.currentStep < this.totalSteps) {
+      let canProceed = true;
+      
+      if (this.currentStep === 1 && !this.consultationForm.get('diagnostic')?.valid) {
+        canProceed = false;
+        this.consultationForm.get('diagnostic')?.markAsTouched();
+      }
+      
+      if (this.currentStep === 3 && !this.consultationForm.get('prixConsultation')?.valid) {
+        canProceed = false;
+        this.consultationForm.get('prixConsultation')?.markAsTouched();
+      }
+      
+      if (canProceed) {
+        this.currentStep++;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   }
 
   previousStep(): void {
     if (this.currentStep > 1) {
       this.currentStep--;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
-  isStep1Valid(): boolean {
-    return this.consultationForm.get('diagnostic')?.valid || false;
-  }
-
-  isStep2Valid(): boolean {
-    return this.consultationForm.get('prixConsultation')?.valid || false;
+  isStepValid(): boolean {
+    if (this.currentStep === 1) {
+      return this.consultationForm.get('diagnostic')?.valid || false;
+    }
+    if (this.currentStep === 3) {
+      return this.consultationForm.get('prixConsultation')?.valid || false;
+    }
+    return true;
   }
 
   // ============ SAUVEGARDE ============
 
   saveConsultation(): void {
     if (!this.rdvId || !this.currentUserId) return;
+    
+    if (this.consultationForm.invalid) {
+      this.consultationForm.markAllAsTouched();
+      alert('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
     
     this.saving = true;
     
@@ -123,22 +149,31 @@ export class ConsultationFormComponent implements OnInit {
       traitement: this.consultationForm.value.traitement,
       notes: this.consultationForm.value.notes,
       prixConsultation: this.consultationForm.value.prixConsultation,
-      montantMedicaments: this.consultationForm.value.montantMedicaments,
+      montantMedicaments: this.consultationForm.value.montantMedicaments || 0,
       statutPaiement: this.consultationForm.value.statutPaiement
     };
     
     this.rdvService.createConsultation(this.rdvId, consultationData).subscribe({
       next: (consultation) => {
         this.consultationCreee = consultation;
-        this.saving = false;
-        this.currentStep = 4; // Étape de succès
         
-        // Notification de succès
-        console.log('✅ Consultation créée:', consultation);
+        // Mettre à jour le statut du RDV
+        this.rdvService.updateStatus(this.rdvId!, 'TERMINE', this.currentUserId!).subscribe({
+          next: () => {
+            this.saving = false;
+            // Rediriger vers la facture
+            this.router.navigate(['/medecin/facture', consultation.id]);
+          },
+          error: () => {
+            this.saving = false;
+            alert('Erreur lors de la mise à jour du statut');
+          }
+        });
       },
       error: (err) => {
         this.saving = false;
-        alert('Erreur lors de la création: ' + (err.error?.message || err.message));
+        console.error('Erreur création consultation:', err);
+        alert('Erreur: ' + (err.error?.message || err.message));
       }
     });
   }
@@ -161,11 +196,11 @@ export class ConsultationFormComponent implements OnInit {
   }
 
   retourListeRdv(): void {
-    this.router.navigate(['/medecin/rendez-vous']);
+    this.router.navigate(['/medecin/rendezvous']);
   }
 
   nouveauRdv(): void {
-    this.router.navigate(['/medecin/rendez-vous']);
+    this.router.navigate(['/medecin/rendezvous']);
   }
 
   // ============ HELPERS ============
@@ -175,9 +210,9 @@ export class ConsultationFormComponent implements OnInit {
   }
 
   formatMontant(montant: number): string {
-    return new Intl.NumberFormat('fr-FR', {
+    return new Intl.NumberFormat('fr-TN', {
       style: 'currency',
-      currency: 'EUR'
+      currency: 'TND'
     }).format(montant);
   }
 }

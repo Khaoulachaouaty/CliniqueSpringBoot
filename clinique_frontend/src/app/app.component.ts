@@ -1,3 +1,4 @@
+// app.component.ts
 import { Component, computed, signal, OnInit, OnDestroy, effect } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -26,11 +27,12 @@ import { NotificationService } from './services/notification.service';
   styles: [`:host { display: block; }`]
 })
 export class AppComponent implements OnInit, OnDestroy {
-  // Computed signals pour la réactivité
+  
+  private isWebSocketInitialized = false; // ✅ Éviter les doubles initialisations
+
   showPublicNavbar = computed(() => {
     const role = this.authService.userRole();
     const isLoggedIn = this.authService.isLoggedIn();
-    // Afficher navbar publique uniquement si NON connecté
     return !isLoggedIn || role === null;
   });
   
@@ -65,40 +67,58 @@ export class AppComponent implements OnInit, OnDestroy {
       this.currentUrl.set(event.urlAfterRedirects);
     });
 
-    // 🔥 Utiliser 'effect' pour réagir aux changements du signal
+    // ✅ Réagir aux changements de connexion
     effect(() => {
       const isLoggedIn = this.authService.isLoggedIn();
-      if (isLoggedIn) {
+      const role = this.authService.userRole();
+      
+      if (isLoggedIn && (role === 'PATIENT' || role === 'MEDECIN')) {
         this.initWebSocketIfLoggedIn();
       } else {
         this.notificationService.closeWebSocket();
+        this.isWebSocketInitialized = false;
       }
     });
   }
 
   ngOnInit(): void {
-    // Initialiser WebSocket si utilisateur déjà connecté
     this.initWebSocketIfLoggedIn();
-    
-    // Demander la permission pour les notifications du navigateur
     this.notificationService.requestNotificationPermission();
   }
 
   ngOnDestroy(): void {
-    // Fermer WebSocket quand l'app se ferme
     this.notificationService.closeWebSocket();
   }
 
-  /**
-   * Initialiser WebSocket si utilisateur connecté
-   */
   private initWebSocketIfLoggedIn(): void {
     const isLoggedIn = this.authService.isLoggedIn();
     const role = this.authService.userRole();
     
+    // ✅ Éviter les doubles initialisations
+    if (this.isWebSocketInitialized) {
+      console.log('WebSocket déjà initialisé, skip...');
+      return;
+    }
+    
     if (isLoggedIn && (role === 'PATIENT' || role === 'MEDECIN')) {
       console.log('🔌 Initialisation WebSocket pour:', role);
+      this.isWebSocketInitialized = true;
       this.notificationService.initWebSocket();
+      
+      // ✅ Démarrer le polling de secours
+      if (role === 'PATIENT') {
+        const patientId = this.authService.getPatientId();
+        if (patientId) {
+          console.log('🔄 Démarrage polling patient:', patientId);
+          this.notificationService.startPollingPatient(patientId);
+        }
+      } else if (role === 'MEDECIN') {
+        const medecinId = this.authService.getMedecinId();
+        if (medecinId) {
+          console.log('🔄 Démarrage polling médecin:', medecinId);
+          this.notificationService.startPollingMedecin(medecinId);
+        }
+      }
       
       // Rafraîchir les notifications au démarrage
       setTimeout(() => {

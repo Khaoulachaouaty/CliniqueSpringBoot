@@ -222,8 +222,8 @@
   </div>
 </div>
 
-<!-- Modal -->
-<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+<!-- Modal Simple Confirmation -->
+<div class="modal-overlay" *ngIf="showModal && modalType !== 'done'" (click)="closeModal()">
   <div class="modal-modern" [class]="'modal-' + getModalColor()" (click)="$event.stopPropagation()">
     <div class="modal-header-modern">
       <div class="modal-icon" [class]="'icon-' + getModalColor()">
@@ -236,16 +236,214 @@
     <div class="modal-body-modern">
       <h4>{{ getModalTitle() }}</h4>
       <p [innerHTML]="getModalMessage()"></p>
-      <div *ngIf="modalType === 'done'" class="modal-info">
-        <i class="bi bi-info-circle-fill"></i>
-        <span>Une consultation sera automatiquement créée.</span>
-      </div>
     </div>
     <div class="modal-footer-modern">
       <button class="btn-modal-secondary" (click)="closeModal()">Annuler</button>
       <button class="btn-modal-primary" [class]="'btn-' + getModalColor()" (click)="confirmAction()">
         {{ getConfirmButtonText() }}
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Formulaire Consultation et Facture -->
+<div class="modal-overlay" *ngIf="modalType === 'done'" (click)="closeModal()">
+  <div class="modal-form-large" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="modal-form-header">
+      <div class="header-content">
+        <div class="header-icon primary">
+          <i class="bi bi-file-medical"></i>
+        </div>
+        <div>
+          <h3 class="mb-0 fw-bold">Terminer la consultation</h3>
+          <p class="text-muted small mb-0">Complétez les informations de la consultation et de la facturation</p>
+        </div>
+      </div>
+      <button class="modal-close" (click)="closeModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-form-body">
+      <!-- Patient Info Card -->
+      <div class="patient-info-card mb-4">
+        <div class="row align-items-center">
+          <div class="col-auto">
+            <div class="patient-avatar-large">
+              {{ getInitials(selectedRdv?.patientPrenom || '', selectedRdv?.patientNom || '') }}
+            </div>
+          </div>
+          <div class="col">
+            <h5 class="mb-1">{{ selectedRdv?.patientPrenom }} {{ selectedRdv?.patientNom }}</h5>
+            <div class="patient-details">
+              <span class="badge bg-info me-2">
+                <i class="bi bi-telephone"></i> {{ selectedRdv?.patientTel }}
+              </span>
+              <span class="badge bg-secondary">
+                <i class="bi bi-calendar2"></i> {{ selectedRdv?.date | date:'dd/MM/yyyy' }} à {{ selectedRdv?.heure }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Content -->
+      <div class="form-content">
+        <!-- Section 1: Informations Médicales -->
+        <div class="form-section">
+          <div class="section-header">
+            <i class="bi bi-clipboard-pulse"></i>
+            <h5>Informations Médicales</h5>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label fw-semibold">
+              Diagnostic <span class="text-danger">*</span>
+            </label>
+            <textarea 
+              [(ngModel)]="consultationForm.diagnostic"
+              class="form-control form-control-modern"
+              rows="3"
+              placeholder="Décrivez le diagnostic du patient..."
+              required>
+            </textarea>
+            <small class="text-muted">Requis - Description détaillée du diagnostic</small>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label fw-semibold">Traitement</label>
+                <textarea 
+                  [(ngModel)]="consultationForm.traitement"
+                  class="form-control form-control-modern"
+                  rows="2"
+                  placeholder="Traitement recommandé...">
+                </textarea>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label fw-semibold">Ordonnance</label>
+                <textarea 
+                  [(ngModel)]="consultationForm.ordonnance"
+                  class="form-control form-control-modern"
+                  rows="2"
+                  placeholder="Liste des médicaments...">
+                </textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label fw-semibold">Notes Additionnelles</label>
+            <textarea 
+              [(ngModel)]="consultationForm.notes"
+              class="form-control form-control-modern"
+              rows="2"
+              placeholder="Informations complémentaires...">
+            </textarea>
+          </div>
+        </div>
+
+        <!-- Section 2: Facturation et Paiement -->
+        <div class="form-section">
+          <div class="section-header">
+            <i class="bi bi-receipt"></i>
+            <h5>Facturation et Paiement</h5>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label fw-semibold">
+                  Prix de la Consultation (DHS) <span class="text-danger">*</span>
+                </label>
+                <div class="input-group input-group-modern">
+                  <input 
+                    type="number" 
+                    [(ngModel)]="consultationForm.prixConsultation"
+                    class="form-control"
+                    min="0"
+                    step="10"
+                    required>
+                  <span class="input-group-text">DHS</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label class="form-label fw-semibold">Montant Médicaments (DHS)</label>
+                <div class="input-group input-group-modern">
+                  <input 
+                    type="number" 
+                    [(ngModel)]="consultationForm.montantMedicaments"
+                    class="form-control"
+                    min="0"
+                    step="10">
+                  <span class="input-group-text">DHS</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Card -->
+          <div class="total-card">
+            <div class="total-row">
+              <span class="total-label">Consultation :</span>
+              <span class="total-value">{{ consultationForm.prixConsultation }} DHS</span>
+            </div>
+            <div class="total-row">
+              <span class="total-label">Médicaments :</span>
+              <span class="total-value">{{ consultationForm.montantMedicaments }} DHS</span>
+            </div>
+            <div class="total-row grand-total">
+              <span class="total-label fw-bold">Total à Payer :</span>
+              <span class="total-value fw-bold text-primary">{{ getMontantTotal() }} DHS</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label fw-semibold">Statut du Paiement</label>
+            <select 
+              [(ngModel)]="consultationForm.statutPaiement"
+              class="form-select form-select-modern">
+              <option value="EN_ATTENTE" class="option-attente">
+                <i class="bi bi-hourglass-split"></i> En Attente
+              </option>
+              <option value="PAYE" class="option-paye">
+                <i class="bi bi-check-circle"></i> Payé
+              </option>
+            </select>
+            <small class="text-muted">
+              <i class="bi bi-info-circle"></i>
+              Le statut du paiement sera enregistré dans la facture
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-form-footer">
+      <div class="footer-info">
+        <i class="bi bi-shield-check text-primary"></i>
+        <span>Les données seront enregistrées et une facture sera automatiquement générée.</span>
+      </div>
+      <div class="footer-actions">
+        <button class="btn btn-outline-secondary" (click)="closeModal()">
+          <i class="bi bi-x-lg me-2"></i>Annuler
+        </button>
+        <button 
+          class="btn btn-primary"
+          (click)="submitConsultation()"
+          [disabled]="savingConsultation || !consultationForm.diagnostic.trim()">
+          <i class="bi bi-save me-2"></i>
+          {{ savingConsultation ? 'Enregistrement...' : 'Enregistrer la consultation' }}
+        </button>
+      </div>
     </div>
   </div>
 </div>

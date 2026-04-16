@@ -38,13 +38,15 @@ export class RendezvousListComponent implements OnInit {
 
   // Formulaire consultation
   showConsultationForm = false;
+  savingConsultation = false;
   consultationForm = {
     diagnostic: '',
     ordonnance: '',
     traitement: '',
     notes: '',
     prixConsultation: 50,
-    montantMedicaments: 0
+    montantMedicaments: 0,
+    statutPaiement: 'EN_ATTENTE'
   };
 
   constructor(
@@ -143,17 +145,18 @@ export class RendezvousListComponent implements OnInit {
     this.selectedRdv = rdv;
     
     if (type === 'done') {
-      // Pré-remplir le formulaire
-      this.consultationForm = {
-        diagnostic: '',
-        ordonnance: '',
-        traitement: '',
-        notes: '',
-        prixConsultation: 50,
-        montantMedicaments: 0
-      };
-      this.showConsultationForm = true;
-      this.showModal = false;
+      // Navigate to consultation-form page with query parameters
+      this.router.navigate(['/medecin/consultation/new'], {
+        queryParams: {
+          rdvId: rdv.id,
+          patientId: rdv.patientId,
+          patientNom: rdv.patientNom,
+          patientPrenom: rdv.patientPrenom,
+          date: rdv.date,
+          heure: rdv.heure,
+          motif: rdv.motif
+        }
+      });
     } else {
       this.showModal = true;
     }
@@ -190,6 +193,14 @@ export class RendezvousListComponent implements OnInit {
 
   submitConsultation(): void {
     if (!this.selectedRdv || !this.currentUserId) return;
+    
+    // Validation
+    if (!this.consultationForm.diagnostic.trim()) {
+      alert('Le diagnostic est obligatoire');
+      return;
+    }
+
+    this.savingConsultation = true;
 
     // 1. Créer la consultation
     const consultationData = {
@@ -198,7 +209,8 @@ export class RendezvousListComponent implements OnInit {
       traitement: this.consultationForm.traitement,
       notes: this.consultationForm.notes,
       prixConsultation: this.consultationForm.prixConsultation,
-      montantMedicaments: this.consultationForm.montantMedicaments
+      montantMedicaments: this.consultationForm.montantMedicaments,
+      statutPaiement: this.consultationForm.statutPaiement as 'EN_ATTENTE' | 'PAYE'
     };
 
     this.rdvService.createConsultation(this.selectedRdv.id, consultationData).subscribe({
@@ -207,19 +219,25 @@ export class RendezvousListComponent implements OnInit {
         this.rdvService.updateStatus(this.selectedRdv!.id, 'TERMINE', this.currentUserId!).subscribe({
           next: (updated) => {
             this.selectedRdv!.statut = updated.statut;
+            this.savingConsultation = false;
+            this.closeConsultationForm();
             this.updateView();
             
-            // 3. Rediriger vers la facture
-            this.router.navigate(['/medecin/facture', consultation.id]);
+            this.showNotification('Consultation enregistrée et facture générée', 'success');
+            
+            // 3. Rediriger vers la facture (optionnel)
+            // this.router.navigate(['/medecin/facture', consultation.id]);
           },
           error: (err) => {
             console.error('Erreur mise à jour statut:', err);
+            this.savingConsultation = false;
             alert('Erreur lors de la mise à jour du statut');
           }
         });
       },
       error: (err) => {
         console.error('Erreur création consultation:', err);
+        this.savingConsultation = false;
         alert('Erreur: ' + (err.error?.message || err.message));
       }
     });
@@ -352,6 +370,7 @@ export class RendezvousListComponent implements OnInit {
     const titles: { [key: string]: string } = {
       'confirm': 'Confirmer le rendez-vous',
       'cancel': 'Annuler le rendez-vous',
+      'done': 'Terminer la consultation',
       'noShow': 'Patient non venu'
     };
     return titles[this.modalType || ''] || 'Confirmation';
@@ -361,6 +380,7 @@ export class RendezvousListComponent implements OnInit {
     const icons: { [key: string]: string } = {
       'confirm': 'bi-check-circle',
       'cancel': 'bi-x-circle',
+      'done': 'bi-file-medical',
       'noShow': 'bi-person-x'
     };
     return icons[this.modalType || ''] || 'bi-question-circle';
@@ -370,6 +390,7 @@ export class RendezvousListComponent implements OnInit {
     const colors: { [key: string]: string } = {
       'confirm': 'success',
       'cancel': 'danger',
+      'done': 'primary',
       'noShow': 'secondary'
     };
     return colors[this.modalType || ''] || 'primary';
@@ -393,22 +414,23 @@ export class RendezvousListComponent implements OnInit {
     }
   }
 
+  getMontantTotal(): number {
+    return (this.consultationForm.prixConsultation || 0) + (this.consultationForm.montantMedicaments || 0);
+  }
+
+  formatDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
   getConfirmButtonText(): string {
     const texts: { [key: string]: string } = {
       'confirm': 'Confirmer',
       'cancel': 'Annuler',
+      'done': 'Terminer',
       'noShow': 'Marquer non venu'
     };
     return texts[this.modalType || ''] || 'Confirmer';
-  }
-
-  formatDate(dateStr: string): string {
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
   }
 
   getInitials(prenom: string, nom: string): string {

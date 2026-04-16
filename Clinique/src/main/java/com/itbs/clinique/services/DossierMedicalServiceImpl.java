@@ -106,4 +106,39 @@ public class DossierMedicalServiceImpl implements DossierMedicalService {
                 .diagnostic(c.getDiagnostic())
                 .build();
     }
+    
+ // DossierMedicalServiceImpl.java - Ajouter cette méthode
+
+    @Override
+    public DossierMedicalResponse updateDossierMedical(Long patientId, Long medecinUserId, String dossierMedical) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new RuntimeException("Patient non trouvé"));
+        
+        Long vraiMedecinId = getMedecinIdFromUserId(medecinUserId);
+        boolean aConsulte = consultationRepository
+                .findByRendezVousPatientIdOrderByRendezVousDateDesc(patientId)
+                .stream()
+                .anyMatch(c -> c.getRendezVous().getMedecin().getId().equals(vraiMedecinId));
+        
+        if (!aConsulte) {
+            throw new RuntimeException("Vous n'avez pas consulté ce patient");
+        }
+        
+        // Mettre à jour le dossier médical
+        patient.setDossierMedical(dossierMedical);
+        patientRepository.save(patient);
+        
+        // Retourner le dossier mis à jour
+        return DossierMedicalResponse.builder()
+                .patientId(patient.getId())
+                .patientNomComplet(patient.getNomComplet())
+                .dateNaissance(patient.getDateNaissance())
+                .dossierMedical(patient.getDossierMedical())
+                .historiqueConsultations(consultationRepository
+                    .findByRendezVousPatientIdOrderByRendezVousDateDesc(patientId)
+                    .stream()
+                    .map(this::mapToResume)
+                    .collect(Collectors.toList()))
+                .build();
+    }
 }

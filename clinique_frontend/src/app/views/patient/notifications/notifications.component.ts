@@ -1,195 +1,138 @@
-// notifications.component.ts - CORRIGÉ ET SIMPLIFIÉ
-
-import { Component, OnInit } from '@angular/core';
+// notification-patient.component.ts
+import { Component, OnInit, OnDestroy, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { NotificationService } from '../../../services/notification.service';
 import { AuthService } from '../../../services/auth.service';
 import { NotificationResponse, NotificationStatut } from '../../../models/notification.model';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
-  selector: 'app-notifications',
+  selector: 'app-notification-patient',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './notifications.component.html',
+  templateUrl: './notifications.component.html',  // ✅ CORRIGÉ
   styleUrls: ['./notifications.component.css']
 })
-export class NotificationsComponent implements OnInit {
+export class NotificationPatientComponent implements OnInit, OnDestroy {
 
-  notifications: NotificationResponse[] = [];
-  filteredNotifications: NotificationResponse[] = [];
-  effectiveId: number | null = null; // 🔥 ID patient spécifique
+  @ViewChild('notificationDropdown') notificationDropdown!: ElementRef;
+
+  isNotificationsOpen = false;
   unreadCount = 0;
-  activeFilter: 'ALL' | 'NON_LUE' | 'LUE' = 'ALL';
+  notifications: NotificationResponse[] = [];
+  currentUserId: number | null = null;
+
+  private destroy$ = new Subject<void>();
 
   constructor(
+    private router: Router,
     private notificationService: NotificationService,
     private authService: AuthService
   ) {}
 
-// notifications.component.ts - CORRECTION ngOnInit()
-
-ngOnInit(): void {
-  const patientId = this.authService.getPatientId();
-
-  console.log('🎯 Patient ID FINAL:', patientId);
-
-  if (patientId === null || patientId === undefined) {
-    console.error('❌ patientId introuvable');
-    return;
-  }
-
-  // 🔥 FORCER la bonne valeur
-  this.effectiveId = patientId;
-
-  this.loadNotifications();
-  this.loadUnreadCount();
-}
-
-  loadNotifications(): void {
-if (this.effectiveId === null || this.effectiveId === undefined) return;    
-    console.log('🚀 Chargement notifications pour patient:', this.effectiveId);
-
-    this.notificationService.getNotificationsByPatient(this.effectiveId).subscribe({
-      next: (data) => {
-        console.log('📥 Données reçues:', data);
-        
-        if (!Array.isArray(data)) {
-          console.error('❌ Pas un tableau:', data);
-          this.notifications = [];
-          this.applyFilter();
-          return;
-        }
-
-        this.notifications = data.sort((a, b) => {
-          return new Date(b.dateEnvoi).getTime() - new Date(a.dateEnvoi).getTime();
+  ngOnInit(): void {
+    this.currentUserId = this.authService.getPatientId();
+    if (this.currentUserId) {
+      console.log('🔔 NotificationPatientComponent - ID Patient:', this.currentUserId);
+      
+      // ✅ S'abonner aux observables pour les mises à jour temps réel
+      this.notificationService.unreadCountPatient
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(count => {
+          console.log('📊 Mise à jour compteur patient:', count);
+          this.unreadCount = count;
         });
 
-        console.log('✅ Notifications chargées:', this.notifications.length);
-        this.applyFilter();
-      },
-      error: (err) => {
-        console.error('❌ Erreur chargement:', err);
-        this.notifications = [];
-        this.applyFilter();
-      }
-    });
+      this.notificationService.notificationsPatient
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(notifs => {
+          console.log('📋 Mise à jour liste notifications patient:', notifs?.length || 0);
+          this.notifications = notifs?.slice(0, 5) || [];
+        });
+
+      // Chargement initial
+      this.loadNotifications();
+    }
   }
 
-  loadUnreadCount(): void {
-if (this.effectiveId === null || this.effectiveId === undefined) return;
-    this.notificationService.getUnreadCountPatient(this.effectiveId).subscribe({
-      next: (count) => {
-        console.log('🔔 Non lues:', count);
-        this.unreadCount = count;
-      },
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  loadNotifications(): void {
+    if (!this.currentUserId) return;
+    
+    console.log('🔄 Chargement manuel des notifications patient...');
+    this.notificationService.getNotificationsByPatient(this.currentUserId).subscribe({
+      next: () => console.log('✅ Notifications chargées'),
+      error: (err) => console.error('❌ Erreur chargement:', err)
+    });
+    this.notificationService.getUnreadCountPatient(this.currentUserId).subscribe({
+      next: (count) => console.log('✅ Compteur chargé:', count),
       error: (err) => console.error('❌ Erreur compteur:', err)
     });
   }
 
-  setFilter(filter: 'ALL' | 'NON_LUE' | 'LUE'): void {
-    this.activeFilter = filter;
-    this.applyFilter();
-  }
-
-  applyFilter(): void {
-    switch (this.activeFilter) {
-      case 'NON_LUE':
-        this.filteredNotifications = this.notifications.filter(n => n.statut === NotificationStatut.NON_LUE);
-        break;
-      case 'LUE':
-        this.filteredNotifications = this.notifications.filter(n => n.statut === NotificationStatut.LUE);
-        break;
-      default:
-        this.filteredNotifications = [...this.notifications];
+  toggleNotifications(event: Event): void {
+    event.stopPropagation();
+    this.isNotificationsOpen = !this.isNotificationsOpen;
+    
+    if (this.isNotificationsOpen) {
+      this.loadNotifications();
     }
   }
 
-  markAsRead(notificationId: number): void {
-    this.notificationService.markAsReadPatient(notificationId).subscribe({
-      next: () => {
-        const notif = this.notifications.find(n => n.id === notificationId);
-        if (notif) {
-          notif.statut = NotificationStatut.LUE;
-          notif.dateLecture = new Date().toISOString();
-        }
-        this.unreadCount = Math.max(0, this.unreadCount - 1);
-        this.applyFilter();
-      },
-      error: (err) => console.error('❌ Erreur mark read:', err)
-    });
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.notificationDropdown?.nativeElement &&
+        !this.notificationDropdown.nativeElement.contains(event.target)) {
+      this.isNotificationsOpen = false;
+    }
   }
 
-  markAllAsRead(): void {
-if (this.effectiveId === null || this.effectiveId === undefined) return;
-    this.notificationService.markAllAsReadPatient(this.effectiveId).subscribe({
-      next: () => {
-        this.notifications.forEach(n => {
-          n.statut = NotificationStatut.LUE;
-          n.dateLecture = new Date().toISOString();
-        });
-        this.unreadCount = 0;
-        this.applyFilter();
-      },
-      error: (err) => console.error('❌ Erreur mark all:', err)
-    });
+  onNotificationClick(notification: NotificationResponse): void {
+    if (notification.statut === NotificationStatut.NON_LUE && notification.id) {
+      this.notificationService.markAsReadPatient(notification.id).subscribe();
+    }
+    
+    this.redirectBasedOnType(notification);
+    this.isNotificationsOpen = false;
   }
 
-  // ... méthodes helper inchangées ...
+  redirectBasedOnType(notification: NotificationResponse): void {
+    const type = notification.type;
+    if (type === 'RAPPEL_RDV' || type === 'CONFIRMATION_RDV' || type === 'ANNULATION_PAR_MEDECIN') {
+      this.router.navigate(['/patient/rendezvous']);
+    } else if (type === 'FACTURE' || type === 'PAIEMENT_RECU') {
+      this.router.navigate(['/patient/factures']);
+    } else {
+      this.router.navigate(['/patient/notifications']);
+    }
+  }
+
+  markAllAsRead(event: Event): void {
+    event.stopPropagation();
+    if (!this.currentUserId) return;
+    
+    this.notificationService.markAllAsReadPatient(this.currentUserId).subscribe();
+  }
+
+  viewAllNotifications(event: Event): void {
+    event.stopPropagation();
+    this.isNotificationsOpen = false;
+    this.router.navigate(['/patient/notifications']);
+  }
+
   getNotificationIcon(type: string): string {
     const icons: { [key: string]: string } = {
-      'CONFIRMATION_RDV': 'bi-calendar-check',
-      'RAPPEL_RDV': 'bi-clock',
-      'ANNULATION_PAR_MEDECIN': 'bi-calendar-x',
+      'RAPPEL_RDV': 'bi-calendar-event-fill',
+      'CONFIRMATION_RDV': 'bi-check-circle-fill',
+      'ANNULATION_PAR_MEDECIN': 'bi-x-circle-fill',
       'FACTURE': 'bi-receipt',
-      'PAIEMENT_RECU': 'bi-cash-stack',
-      'DEMANDE_EN_ATTENTE': 'bi-hourglass',
-      'NOUVEAU_RDV': 'bi-calendar-plus',
-      'ANNULATION_PAR_PATIENT': 'bi-calendar-x',
-      'SYSTEME': 'bi-info-circle'
+      'PAIEMENT_RECU': 'bi-cash-coin'
     };
-    return icons[type] || 'bi-bell';
-  }
-
-  getNotificationTitle(type: string): string {
-    const titles: { [key: string]: string } = {
-      'CONFIRMATION_RDV': 'Rendez-vous confirmé',
-      'RAPPEL_RDV': 'Rappel de rendez-vous',
-      'ANNULATION_PAR_MEDECIN': 'Rendez-vous annulé',
-      'FACTURE': 'Nouvelle facture',
-      'PAIEMENT_RECU': 'Paiement reçu',
-      'DEMANDE_EN_ATTENTE': 'Demande en attente',
-      'NOUVEAU_RDV': 'Nouveau rendez-vous',
-      'ANNULATION_PAR_PATIENT': 'Annulation par patient',
-      'SYSTEME': 'Information'
-    };
-    return titles[type] || 'Notification';
-  }
-
-  formatDate(date: string): string {
-    const d = new Date(date);
-    const now = new Date();
-    const diff = now.getTime() - d.getTime();
-    
-    if (diff < 60000) return 'À l\'instant';
-    if (diff < 3600000) {
-      const minutes = Math.floor(diff / 60000);
-      return `Il y a ${minutes} minute${minutes > 1 ? 's' : ''}`;
-    }
-    if (diff < 86400000) {
-      const hours = Math.floor(diff / 3600000);
-      return `Il y a ${hours} heure${hours > 1 ? 's' : ''}`;
-    }
-    if (diff < 604800000) {
-      const days = Math.floor(diff / 86400000);
-      return `Il y a ${days} jour${days > 1 ? 's' : ''}`;
-    }
-    
-    return d.toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return icons[type] || 'bi-bell-fill';
   }
 }

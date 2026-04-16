@@ -213,5 +213,13 @@ getOrCreateConsultation(rdvId: number): Observable<Consultation> {
       end: endDate 
     }
   });
+  
+}
+updateDossierMedical(patientId: number, medecinId: number, dossierMedical: string): Observable<DossierMedicalResponse> {
+  return this.http.put<DossierMedicalResponse>(
+    `${this.API_URL}/dossiers-medicaux/patient/${patientId}`,
+    dossierMedical,
+    { params: { medecinId: medecinId.toString() } }
+  );
 }
 }

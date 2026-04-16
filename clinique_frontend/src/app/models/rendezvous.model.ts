@@ -108,6 +108,7 @@ export interface DossierMedicalResponse {
   historiqueConsultations: ConsultationResume[];
 }
 
+
 // ============================================
 // FACTURATION
 // ============================================
