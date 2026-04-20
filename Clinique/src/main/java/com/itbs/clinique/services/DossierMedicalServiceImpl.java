@@ -141,4 +141,23 @@ public class DossierMedicalServiceImpl implements DossierMedicalService {
                     .collect(Collectors.toList()))
                 .build();
     }
+
+    @Override
+    public DossierMedicalResponse consulterMonDossier(Long patientId) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new RuntimeException("Patient non trouvé"));
+        
+        List<Consultation> consultations = consultationRepository
+                .findByRendezVousPatientIdOrderByRendezVousDateDesc(patientId);
+        
+        return DossierMedicalResponse.builder()
+                .patientId(patient.getId())
+                .patientNomComplet(patient.getNomComplet())
+                .dateNaissance(patient.getDateNaissance())
+                .dossierMedical(patient.getDossierMedical())
+                .historiqueConsultations(consultations.stream()
+                    .map(this::mapToResume)
+                    .collect(Collectors.toList()))
+                .build();
+    }
 }

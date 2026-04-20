@@ -222,4 +222,9 @@ updateDossierMedical(patientId: number, medecinId: number, dossierMedical: strin
     { params: { medecinId: medecinId.toString() } }
   );
 }
+
+// Pour le patient qui consulte son propre dossier
+consulterMonDossierMedical(patientId: number): Observable<DossierMedicalResponse> {
+  return this.http.get<DossierMedicalResponse>(`${this.API_URL}/dossiers-medicaux/patient/mon-dossier/${patientId}`);
+}
 }

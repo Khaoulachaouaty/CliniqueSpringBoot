@@ -127,6 +127,7 @@
             </div>
 
             <!-- ==================== ONGLET DOSSIER MÉDICAL ==================== -->
+            <!-- Lecture seule - le patient ne peut pas modifier -->
             <div class="tab-content" *ngIf="activeTab === 'dossier'">
               <div class="dossier-card">
                 <div class="dossier-header-card">
@@ -135,30 +136,18 @@
                     <h4>Mon Dossier Médical</h4>
                     <span class="dossier-info">Antécédents, allergies, traitements de fond</span>
                   </div>
-                  <button class="btn-edit" *ngIf="!editingDossier" (click)="editingDossier = true" [disabled]="updating">
-                    <i class="bi bi-pencil"></i> Modifier
-                  </button>
+                  <!-- ✅ PAS DE BOUTON MODIFIER pour le patient -->
                 </div>
 
-                <!-- Mode visualisation -->
-                <div *ngIf="!editingDossier" class="dossier-content-view">
+                <!-- Mode visualisation uniquement -->
+                <div class="dossier-content-view">
                   <div class="dossier-field">
-                    <pre>{{ dossierText || 'Aucune information médicale enregistrée' }}</pre>
+                    <pre>{{ dossierMedicalContent || 'Aucune information médicale enregistrée' }}</pre>
                   </div>
-                </div>
-
-                <!-- Mode édition -->
-                <div *ngIf="editingDossier" class="dossier-content-edit">
-                  <textarea [(ngModel)]="dossierText" 
-                            class="form-control" 
-                            rows="10"
-                            placeholder="=== ANTÉCÉDENTS MÉDICAUX ===&#10;- Hypertension artérielle (2018)&#10;- Diabète type 2 (2020)&#10;&#10;=== ALLERGIES ===&#10;- Pénicilline (allergie sévère)&#10;- Arachides&#10;&#10;=== TRAITEMENTS EN COURS ===&#10;- Ramipril 5mg/jour&#10;- Metformine 500mg x2/jour"></textarea>
-                  <div class="edit-actions">
-                    <button class="btn-cancel" (click)="cancelEditDossier()" [disabled]="updating">Annuler</button>
-                    <button class="btn-save" (click)="saveDossierMedical()" [disabled]="updating">
-                      <i class="bi" [class.bi-save]="!updating" [class.bi-hourglass-split]="updating"></i>
-                      {{ updating ? 'Enregistrement...' : 'Enregistrer' }}
-                    </button>
+                  <div *ngIf="!dossierMedicalContent" class="empty-dossier">
+                    <i class="bi bi-file-text"></i>
+                    <p>Aucune information médicale disponible</p>
+                    <p class="small text-muted">Consultez un médecin pour compléter votre dossier</p>
                   </div>
                 </div>
               </div>

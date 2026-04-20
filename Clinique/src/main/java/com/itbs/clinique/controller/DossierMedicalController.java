@@ -20,7 +20,6 @@ public class DossierMedicalController {
     
     private final DossierMedicalService dossierMedicalService;
     
-    // 🔥 CONSTRUCTEUR REQUIS pour l'injection
     public DossierMedicalController(DossierMedicalService dossierMedicalService) {
         this.dossierMedicalService = dossierMedicalService;
     }
@@ -31,7 +30,13 @@ public class DossierMedicalController {
             @RequestParam Long medecinId) {
         return ResponseEntity.ok(dossierMedicalService.consulterDossier(patientId, medecinId));
     }
- // DossierMedicalController.java - Ajouter cette méthode
+    
+    // ✅ NOUVEAU ENDPOINT - Pour que le patient consulte son propre dossier
+    @GetMapping("/patient/mon-dossier/{patientId}")
+    public ResponseEntity<DossierMedicalResponse> consulterMonDossier(
+            @PathVariable Long patientId) {
+        return ResponseEntity.ok(dossierMedicalService.consulterMonDossier(patientId));
+    }
 
     @PutMapping("/patient/{patientId}")
     public ResponseEntity<DossierMedicalResponse> updateDossierMedical(

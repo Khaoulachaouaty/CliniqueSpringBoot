@@ -17,11 +17,8 @@ export class MonDossierComponent implements OnInit {
   
   user: any = null;
   consultations: Consultation[] = [];
-  dossierMedical: DossierMedicalResponse | null = null;
-  dossierText: string = '';
+  dossierMedicalContent: string = '';  // Contenu du dossier médical (lecture seule)
   loading = false;
-  updating = false;
-  editingDossier = false;
   activeTab: string = 'consultations';
 
   constructor(
@@ -54,54 +51,28 @@ export class MonDossierComponent implements OnInit {
     });
   }
 
+  // ✅ CORRIGÉ - Le patient consulte son propre dossier sans medecinId
   loadDossierMedical(): void {
     const patientId = this.authService.getPatientId();
-    const medecinId = this.authService.getCurrentUserId();
-    if (!patientId || !medecinId) return;
+    if (!patientId) return;
 
-    this.rdvService.consulterDossierMedical(patientId, medecinId).subscribe({
-      next: (dossier) => {
-        this.dossierMedical = dossier;
-        this.dossierText = dossier?.dossierMedical || '';
+    this.rdvService.consulterMonDossierMedical(patientId).subscribe({
+      next: (dossier: DossierMedicalResponse) => {
+        this.dossierMedicalContent = dossier?.dossierMedical || '';
+        console.log('Dossier médical chargé:', this.dossierMedicalContent);
       },
       error: (err) => {
         console.error('Erreur chargement dossier médical:', err);
+        this.dossierMedicalContent = '';
       }
     });
-  }
-
-  saveDossierMedical(): void {
-    const patientId = this.authService.getPatientId();
-    const medecinId = this.authService.getCurrentUserId();
-    if (!patientId || !medecinId) return;
-
-    this.updating = true;
-    this.rdvService.updateDossierMedical(patientId, medecinId, this.dossierText).subscribe({
-      next: (dossier) => {
-        this.dossierMedical = dossier;
-        this.dossierText = dossier?.dossierMedical || '';
-        this.editingDossier = false;
-        this.updating = false;
-        alert('Dossier médical mis à jour avec succès');
-      },
-      error: (err) => {
-        console.error('Erreur mise à jour dossier:', err);
-        this.updating = false;
-        alert('Erreur lors de la mise à jour');
-      }
-    });
-  }
-
-  cancelEditDossier(): void {
-    this.editingDossier = false;
-    this.dossierText = this.dossierMedical?.dossierMedical || '';
   }
 
   payerFacture(consultation: Consultation): void {
     if (!confirm(`Confirmer le paiement de ${this.formatMontant(consultation.montantTotal || consultation.prixConsultation)} ?`)) return;
     
     this.rdvService.updateStatutPaiement(consultation.id, 'PAYE').subscribe({
-      next: (facture) => {
+      next: () => {
         consultation.statutPaiement = 'PAYE';
         alert('Paiement effectué avec succès !');
         
@@ -119,7 +90,6 @@ export class MonDossierComponent implements OnInit {
   telechargerFacture(consultationId: number): void {
     this.rdvService.genererFacturePDF(consultationId).subscribe({
       next: (facture) => {
-        console.log('Facture PDF générée:', facture);
         alert(`Facture N° ${facture.numeroFacture} prête au téléchargement`);
       },
       error: (err) => {

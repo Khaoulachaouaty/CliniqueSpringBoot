@@ -1,31 +1,5 @@
 <div class="facture-patient-container">
   <!-- Header -->
-  <div class="facture-header">
-    <div class="header-content">
-      <div class="back-button-container">
-        <button class="btn-back" (click)="retour()" title="Retour">
-          <i class="bi bi-arrow-left"></i> Retour
-        </button>
-      </div>
-      <div class="header-title">
-        <div class="header-icon">
-          <i class="bi bi-receipt"></i>
-        </div>
-        <div>
-          <h2>Facture</h2>
-          <p class="text-muted small">Détail de votre facture</p>
-        </div>
-      </div>
-      <div class="header-actions">
-        <button class="btn-action btn-download" (click)="telechargerPDF()" title="Télécharger PDF">
-          <i class="bi bi-download"></i> PDF
-        </button>
-        <button class="btn-action btn-print" (click)="imprimer()" title="Imprimer">
-          <i class="bi bi-printer"></i> Imprimer
-        </button>
-      </div>
-    </div>
-  </div>
 
   <!-- Loading -->
   <div *ngIf="loading" class="loading-wrapper">

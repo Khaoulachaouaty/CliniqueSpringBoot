@@ -54,7 +54,7 @@
 .header-icon {
   width: 52px;
   height: 52px;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  background: linear-gradient(135deg, #10b981, #059669);
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -448,6 +448,7 @@
     width: 44px;
     height: 44px;
     font-size: 1.2rem;
+    
   }
   
   .header-left h2 {
