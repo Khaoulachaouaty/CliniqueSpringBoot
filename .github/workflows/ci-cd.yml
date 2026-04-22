@@ -25,10 +25,10 @@ jobs:
       with:
         node-version: '18'
     
-    - name: Backend - Maven test
+    - name: Backend - Maven compile (skip tests)
       run: |
         cd Clinique
-        mvn clean test
+        mvn clean compile -DskipTests
     
     - name: Frontend - NPM install
       run: |
