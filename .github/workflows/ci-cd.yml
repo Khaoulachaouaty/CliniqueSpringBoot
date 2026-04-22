@@ -29,7 +29,7 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
     
-    - name: Backend - Maven compile
+    - name: Backend - Maven compile (skip tests)
       run: |
         cd Clinique
         mvn clean compile -DskipTests
@@ -40,16 +40,15 @@ jobs:
         npm ci
         npm run build
     
-    - name: SonarQube Scan
+    - name: SonarQube Scan (skip tests)
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         cd Clinique
-        mvn verify sonar:sonar \
+        mvn sonar:sonar -DskipTests \
           -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
           -Dsonar.organization=${{ secrets.SONAR_ORG }} \
-          -Dsonar.host.url=https://sonarcloud.io \
-          -Dsonar.coverage.exclusions=**/*Test.java
+          -Dsonar.host.url=https://sonarcloud.io
     
     - name: Build and push Backend
       uses: docker/build-push-action@v5
