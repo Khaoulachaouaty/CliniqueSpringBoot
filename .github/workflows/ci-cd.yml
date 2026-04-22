@@ -1,0 +1,51 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Backend - Maven test
+      run: |
+        cd Clinique
+        mvn clean test
+    
+    - name: Frontend - NPM install
+      run: |
+        cd clinique_frontend
+        npm ci
+    
+    - name: Frontend - Build
+      run: |
+        cd clinique_frontend
+        npm run build
+    
+    - name: Docker build backend
+      run: |
+        cd Clinique
+        docker build -t clinique-backend:latest .
+    
+    - name: Docker build frontend
+      run: |
+        cd clinique_frontend
+        docker build -t clinique-frontend:latest .
