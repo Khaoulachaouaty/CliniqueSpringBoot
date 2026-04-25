@@ -1,0 +1,23 @@
+-- ============================================
+-- INITIALISATION DES DONNÉES DE BASE
+-- ============================================
+
+-- 1. Créer les rôles s'ils n'existent pas
+INSERT INTO role (role_id, role) VALUES (1, 'PATIENT')
+ON DUPLICATE KEY UPDATE role = VALUES(role);
+
+INSERT INTO role (role_id, role) VALUES (2, 'ADMIN')
+ON DUPLICATE KEY UPDATE role = VALUES(role);
+
+INSERT INTO role (role_id, role) VALUES (3, 'MEDECIN')
+ON DUPLICATE KEY UPDATE role = VALUES(role);
+
+-- 2. Créer l'utilisateur admin s'il n'existe pas
+-- Mot de passe: admin123 (hash BCrypt)
+INSERT INTO user (user_id, enabled, nom, password, prenom, tel, username) 
+VALUES (1, 1, 'Admin', '$2a$10$NkM5C6qE7qE7qE7qE7qE7uOjXpLqM9rS8tU5vW3xY2zA1bC4dE5fG', 'System', '00000000', 'admin@clinique.com')
+ON DUPLICATE KEY UPDATE username = VALUES(username);
+
+-- 3. Lier l'admin au rôle ADMIN
+INSERT INTO user_role (user_id, role_id) VALUES (1, 2)
+ON DUPLICATE KEY UPDATE user_id = VALUES(user_id), role_id = VALUES(role_id);

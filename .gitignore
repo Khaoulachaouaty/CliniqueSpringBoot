@@ -1,0 +1,25 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+
+# Tests
+surefire-reports/
+
+# Node
+node_modules/
+dist/
+
+# Docker
+*.log
+
+# Eclipse
+.metadata/"*.exe" 
+".metadata/" 
+"argocd.exe" 
+"argocd-windows-amd64.exe" 
+argocd-windows-amd64.exe 
+argocd.exe 
+argocd*.exe 
