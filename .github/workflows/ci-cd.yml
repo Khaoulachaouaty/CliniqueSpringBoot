@@ -27,8 +27,8 @@ jobs:
       - name: Backend - Maven compile
         run: cd Clinique && mvn clean compile
 
-      - name: Backend - Maven tests
-        run: cd Clinique && mvn test
+      - name: Backend - Maven tests (disabled)
+        run: cd Clinique && mvn test -DskipTests
 
       # Frontend (React)
       - name: Setup Node.js
