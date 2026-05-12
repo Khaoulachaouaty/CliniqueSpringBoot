@@ -1,0 +1,42 @@
+services:
+  # Backend Spring Boot
+  - type: web
+    name: clinique-backend
+    env: docker
+    repo: https://github.com/Khaoulachaouaty/CliniqueSpringBoot
+    rootDir: Clinique
+    plan: free
+    envVars:
+      - key: MYSQL_HOST
+        fromService:
+          name: clinique-db
+          type: database
+          property: host
+      - key: MYSQL_USER
+        fromService:
+          name: clinique-db
+          type: database
+          property: user
+      - key: MYSQL_PASSWORD
+        fromService:
+          name: clinique-db
+          type: database
+          property: password
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:mysql://${MYSQL_HOST}:3306/clinique_db?useSSL=false
+
+  # Frontend Angular
+  - type: web
+    name: clinique-frontend
+    env: docker
+    repo: https://github.com/Khaoulachaouaty/CliniqueSpringBoot
+    rootDir: clinique_frontend
+    plan: free
+    envVars:
+      - key: BACKEND_URL
+        value: https://clinique-backend.onrender.com
+
+databases:
+  - name: clinique-db
+    databaseName: clinique_db
+    plan: free
