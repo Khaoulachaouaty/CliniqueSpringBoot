@@ -11,8 +11,6 @@ services:
         fromDatabase:
           name: clinique-db
           property: host
-      - key: SPRING_DATASOURCE_URL
-        value: jdbc:mysql://clinique-db:3306/clinique_db?useSSL=false
       - key: MYSQL_USER
         value: root
       - key: MYSQL_PASSWORD
@@ -31,6 +29,6 @@ services:
 
 databases:
   - name: clinique-db
-    databaseName: clinique_db
+    databaseName: clinique_DB
     user: root
     plan: free
