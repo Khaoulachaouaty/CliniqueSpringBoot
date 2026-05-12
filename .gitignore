@@ -15,11 +15,18 @@ dist/
 # Docker
 *.log
 
-# Eclipse
-.metadata/"*.exe" 
-".metadata/" 
-"argocd.exe" 
-"argocd-windows-amd64.exe" 
-argocd-windows-amd64.exe 
-argocd.exe 
-argocd*.exe 
+# IDE
+.metadata/
+.settings/
+.project
+.classpath
+.factorypath
+
+# Large files
+argocd.exe
+argocd-windows-amd64.exe
+*.exe
+
+# OS
+Thumbs.db
+.DS_Store

@@ -27,6 +27,10 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
     networks:
       - clinique-network
 

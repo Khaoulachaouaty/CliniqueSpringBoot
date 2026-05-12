@@ -6,7 +6,7 @@ COPY . .
 RUN npm run build
 
 FROM nginx:stable-alpine
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/dist/clinique_backend/browser /usr/share/nginx/html
 RUN echo 'server { \
     listen 80; \
     server_name localhost; \
