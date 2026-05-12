@@ -10,20 +10,13 @@ services:
       - key: MYSQL_HOST
         fromService:
           name: clinique-db
-          type: database
           property: host
-      - key: MYSQL_USER
-        fromService:
-          name: clinique-db
-          type: database
-          property: user
-      - key: MYSQL_PASSWORD
-        fromService:
-          name: clinique-db
-          type: database
-          property: password
       - key: SPRING_DATASOURCE_URL
-        value: jdbc:mysql://${MYSQL_HOST}:3306/clinique_db?useSSL=false
+        value: jdbc:mysql://clinique-db:3306/clinique_db?useSSL=false
+      - key: MYSQL_USER
+        value: root
+      - key: MYSQL_PASSWORD
+        value: root
 
   # Frontend Angular
   - type: web
@@ -39,4 +32,5 @@ services:
 databases:
   - name: clinique-db
     databaseName: clinique_db
+    user: root
     plan: free
