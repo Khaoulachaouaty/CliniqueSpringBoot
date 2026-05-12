@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [preprod]
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE: khaoulachaouaty/clinique-backend
