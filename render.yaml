@@ -8,7 +8,7 @@ services:
     plan: free
     envVars:
       - key: MYSQL_HOST
-        fromService:
+        fromDatabase:
           name: clinique-db
           property: host
       - key: SPRING_DATASOURCE_URL
