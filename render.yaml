@@ -29,6 +29,6 @@ services:
 
 databases:
   - name: clinique-db
-    databaseName: clinique_DB
+    databaseName: clinique_db
     user: root
     plan: free
