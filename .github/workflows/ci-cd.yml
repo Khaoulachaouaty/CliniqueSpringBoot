@@ -160,7 +160,7 @@ jobs:
             -n ${{ env.K8S_NAMESPACE }}
           kubectl rollout status deployment/backend \
             -n ${{ env.K8S_NAMESPACE }} \
-            --timeout=180s
+            --timeout=300s
 
       - name: Apply Frontend deployment
         run: kubectl apply -f k8s/frontend-deployment.yaml
