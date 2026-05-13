@@ -10,12 +10,14 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Date;
@@ -26,6 +28,8 @@ import java.util.Map;
 @RequestMapping("/api/consultations")
 @CrossOrigin(origins = "*")
 @Tag(name = "Consultations", description = "Gestion des consultations médicales et facturation")
+@SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAnyRole('MEDECIN', 'ADMIN')")
 public class ConsultationController {
 
     private static final Logger logger = LoggerFactory.getLogger(ConsultationController.class);
@@ -131,7 +135,9 @@ public class ConsultationController {
         return ResponseEntity.ok(consultationService.genererFacture(id));
     }
 
+    // Le patient peut voir ses propres factures
     @Operation(summary = "Factures d'un patient", description = "Retourne toutes les factures d'un patient.")
+    @PreAuthorize("hasAnyRole('PATIENT', 'MEDECIN', 'ADMIN')")
     @GetMapping("/patient/{patientId}/factures")
     public ResponseEntity<List<FactureResponse>> getFacturesPatient(
             @Parameter(description = "ID du patient", required = true, example = "3")

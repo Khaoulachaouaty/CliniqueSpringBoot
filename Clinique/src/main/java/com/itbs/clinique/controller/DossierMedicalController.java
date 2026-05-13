@@ -9,14 +9,17 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/dossiers-medicaux")
 @CrossOrigin(origins = "*")
 @Tag(name = "Dossiers Médicaux", description = "Consultation et mise à jour des dossiers patients")
+@SecurityRequirement(name = "bearerAuth")
 public class DossierMedicalController {
 
     private final DossierMedicalService dossierMedicalService;
@@ -27,13 +30,9 @@ public class DossierMedicalController {
 
     @Operation(
         summary = "Consulter le dossier d'un patient (médecin)",
-        description = "Permet à un médecin de consulter le dossier médical complet d'un patient, incluant l'historique des consultations."
+        description = "Permet à un médecin de consulter le dossier médical complet d'un patient."
     )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Dossier médical retourné",
-            content = @Content(schema = @Schema(implementation = DossierMedicalResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Patient ou médecin introuvable", content = @Content)
-    })
+    @PreAuthorize("hasAnyRole('MEDECIN', 'ADMIN')")
     @GetMapping("/patient/{patientId}")
     public ResponseEntity<DossierMedicalResponse> consulterDossier(
             @Parameter(description = "ID du patient", required = true, example = "3")
@@ -45,13 +44,9 @@ public class DossierMedicalController {
 
     @Operation(
         summary = "Consulter son propre dossier (patient)",
-        description = "Permet à un patient de consulter son propre dossier médical sans avoir besoin de l'ID d'un médecin."
+        description = "Permet à un patient de consulter son propre dossier médical."
     )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Dossier médical retourné",
-            content = @Content(schema = @Schema(implementation = DossierMedicalResponse.class))),
-        @ApiResponse(responseCode = "404", description = "Patient introuvable", content = @Content)
-    })
+    @PreAuthorize("hasAnyRole('PATIENT', 'MEDECIN', 'ADMIN')")
     @GetMapping("/patient/mon-dossier/{patientId}")
     public ResponseEntity<DossierMedicalResponse> consulterMonDossier(
             @Parameter(description = "ID du patient", required = true, example = "3")
@@ -61,14 +56,9 @@ public class DossierMedicalController {
 
     @Operation(
         summary = "Mettre à jour le dossier médical",
-        description = "Permet à un médecin de mettre à jour les informations du dossier médical d'un patient (antécédents, allergies, notes, etc.)."
+        description = "Permet à un médecin de mettre à jour les informations du dossier médical d'un patient."
     )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Dossier mis à jour",
-            content = @Content(schema = @Schema(implementation = DossierMedicalResponse.class))),
-        @ApiResponse(responseCode = "403", description = "Non autorisé", content = @Content),
-        @ApiResponse(responseCode = "404", description = "Patient introuvable", content = @Content)
-    })
+    @PreAuthorize("hasAnyRole('MEDECIN', 'ADMIN')")
     @PutMapping("/patient/{patientId}")
     public ResponseEntity<DossierMedicalResponse> updateDossierMedical(
             @Parameter(description = "ID du patient", required = true, example = "3")

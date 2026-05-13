@@ -10,12 +10,14 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
@@ -25,6 +27,7 @@ import java.util.List;
 @RequestMapping("/api/rendezvous")
 @CrossOrigin(origins = "*")
 @Tag(name = "Rendez-vous", description = "Prise, modification et annulation de rendez-vous")
+@SecurityRequirement(name = "bearerAuth")
 public class RendezVousController {
 
     private static final Logger logger = LoggerFactory.getLogger(RendezVousController.class);
@@ -229,6 +232,7 @@ public class RendezVousController {
     // ==================== ADMIN ====================
 
     @Operation(summary = "Tous les rendez-vous", description = "Retourne l'ensemble des rendez-vous (accès admin).")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<RendezVousResponse>> getAllRendezVous() {
         logger.info("📋 Liste tous les RDV");
