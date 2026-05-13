@@ -1,11 +1,9 @@
 package com.itbs.clinique.config;
 
 import com.itbs.clinique.security.JwtAuthenticationFilter;
-import com.itbs.clinique.security.UserDetailsServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,12 +20,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SimpleSecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final UserDetailsServiceImpl userDetailsService;
 
-    public SimpleSecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                                UserDetailsServiceImpl userDetailsService) {
+    public SimpleSecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.userDetailsService = userDetailsService;
     }
 
     @Bean
@@ -35,14 +30,7 @@ public class SimpleSecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
-        return provider;
-    }
-
+    // Spring Boot auto-configure DaoAuthenticationProvider via le bean UserDetailsServiceImpl
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
@@ -88,7 +76,6 @@ public class SimpleSecurityConfig {
                 // ── Tout le reste : authentifié ────────────────────────────
                 .anyRequest().authenticated()
             )
-            .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
