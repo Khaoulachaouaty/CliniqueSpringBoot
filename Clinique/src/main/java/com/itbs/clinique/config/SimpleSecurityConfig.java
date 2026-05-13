@@ -25,6 +25,12 @@ public class SimpleSecurityConfig {
             
             // Autoriser tout le monde à tout faire (simplifié pour débutant)
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/api-docs/**",
+                    "/api-docs.yaml"
+                ).permitAll()
                 .anyRequest().permitAll()
             );
         
