@@ -28,6 +28,7 @@ public class User {
 
     private Boolean enabled;
 
+    // Charge automatiquement le rôle dès qu'on charge un utilisateur
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private Role role;

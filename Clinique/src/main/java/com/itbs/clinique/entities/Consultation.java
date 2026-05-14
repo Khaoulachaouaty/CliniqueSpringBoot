@@ -20,8 +20,8 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"rendezVous"}) // 🔥 AJOUTÉ
-@EqualsAndHashCode(exclude = {"rendezVous"}) // 🔥 
+@ToString(exclude = {"rendezVous"}) 
+@EqualsAndHashCode(exclude = {"rendezVous"})  
 
 public class Consultation {
     

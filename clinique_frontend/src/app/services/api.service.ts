@@ -52,4 +52,8 @@ deletePatient(id: number): Observable<any> {
   return this.http.delete(`${this.API_URL}/admin/patients/${id}`);
 }
 
+updateMedecin(id: number, data: { nom?: string; prenom?: string; tel?: string; specialite?: string }): Observable<any> {
+  return this.http.put(`${this.API_URL}/admin/medecins/${id}`, data);
+}
+
 }

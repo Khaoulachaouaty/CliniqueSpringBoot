@@ -22,7 +22,7 @@ import lombok.ToString;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"user", "rendezVous"}) // 🔥 AJOUTÉ
+@ToString(exclude = {"user", "rendezVous"})
 @EqualsAndHashCode(exclude = {"user", "rendezVous"}) 
 public class Patient {
     
