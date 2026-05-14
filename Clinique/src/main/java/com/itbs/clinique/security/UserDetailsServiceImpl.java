@@ -9,7 +9,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -25,15 +24,15 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur introuvable : " + username));
 
-        // Convertir les rôles en GrantedAuthority avec le préfixe ROLE_
-        List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRole()))
-                .collect(Collectors.toList());
+        // Un seul rôle par utilisateur
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(
+                "ROLE_" + user.getRole().getRole()
+        );
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
-                .authorities(authorities)
+                .authorities(List.of(authority))
                 .accountExpired(false)
                 .accountLocked(false)
                 .credentialsExpired(false)

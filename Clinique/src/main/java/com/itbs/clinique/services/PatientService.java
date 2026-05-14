@@ -7,4 +7,5 @@ import com.itbs.clinique.dto.PatientResponse;
 public interface PatientService {
     List<PatientResponse> getAllPatients();
     PatientResponse getPatientById(Long id);
+    void deletePatient(Long id);
 }

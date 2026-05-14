@@ -147,4 +147,18 @@ public class AdminController {
     public ResponseEntity<List<PatientResponse>> getAllPatients() {
         return ResponseEntity.ok(patientService.getAllPatients());
     }
+
+    @Operation(summary = "Supprimer un patient", description = "Supprime définitivement un patient, ses rendez-vous et son compte utilisateur.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Patient supprimé",
+            content = @Content(schema = @Schema(implementation = MessageResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Patient introuvable", content = @Content)
+    })
+    @DeleteMapping("/patients/{id}")
+    public ResponseEntity<MessageResponse> deletePatient(
+            @Parameter(description = "ID du patient à supprimer", required = true, example = "3")
+            @PathVariable Long id) {
+        patientService.deletePatient(id);
+        return ResponseEntity.ok(new MessageResponse("Patient supprimé avec succès", true));
+    }
 }

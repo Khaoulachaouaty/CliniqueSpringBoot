@@ -3,10 +3,14 @@ package com.itbs.clinique.services;
 import com.itbs.clinique.dto.MedecinResponse;
 import com.itbs.clinique.entities.Medecin;
 import com.itbs.clinique.entities.User;
+import com.itbs.clinique.repositories.ConsultationRepository;
 import com.itbs.clinique.repositories.MedecinRepository;
+import com.itbs.clinique.repositories.NotificationRepository;
 import com.itbs.clinique.repositories.RendezVousRepository;
+import com.itbs.clinique.repositories.UserRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,14 +19,23 @@ import java.util.stream.Collectors;
 
 @Service
 public class MedecinServiceImpl implements MedecinService {
-    
+
     private final MedecinRepository medecinRepository;
     private final RendezVousRepository rendezVousRepository;
+    private final ConsultationRepository consultationRepository;
+    private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
 
     public MedecinServiceImpl(MedecinRepository medecinRepository,
-                              RendezVousRepository rendezVousRepository) {
+                              RendezVousRepository rendezVousRepository,
+                              ConsultationRepository consultationRepository,
+                              NotificationRepository notificationRepository,
+                              UserRepository userRepository) {
         this.medecinRepository = medecinRepository;
         this.rendezVousRepository = rendezVousRepository;
+        this.consultationRepository = consultationRepository;
+        this.notificationRepository = notificationRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -50,26 +63,46 @@ public class MedecinServiceImpl implements MedecinService {
     public Map<String, Object> getMedecinDetails(Long id) {
         Medecin medecin = medecinRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Médecin non trouvé"));
-        
+
         int nombrePatients = rendezVousRepository.countDistinctPatientsByMedecinId(id);
         int rendezVousTotal = rendezVousRepository.countByMedecinId(id);
-        
+
         Map<String, Object> details = new HashMap<>();
         details.put("medecin", mapToResponse(medecin));
         details.put("nombrePatients", nombrePatients);
         details.put("rendezVousTotal", rendezVousTotal);
-        
+
         return details;
     }
 
     @Override
+    @Transactional
     public void deleteMedecin(Long id) {
         Medecin medecin = medecinRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Médecin non trouvé"));
-        medecinRepository.delete(medecin);
-    }
+                .orElseThrow(() -> new RuntimeException("Médecin non trouvé: " + id));
 
-    // SUPPRIMÉ : findById (utilisez medecinRepository.findById() directement si besoin)
+        Long userId = medecin.getUser().getUserId();
+
+        // 1. Supprimer les notifications liées au médecin
+        notificationRepository.findByMedecinIdOrderByDateEnvoiDesc(id)
+                .forEach(notificationRepository::delete);
+
+        // 2. Supprimer les consultations liées aux rendez-vous du médecin
+        rendezVousRepository.findByMedecinId(id).forEach(rdv -> {
+            consultationRepository.findByRendezVousId(rdv.getId())
+                    .ifPresent(consultationRepository::delete);
+        });
+
+        // 3. Supprimer les rendez-vous du médecin
+        rendezVousRepository.findByMedecinId(id)
+                .forEach(rendezVousRepository::delete);
+
+        // 4. Supprimer le médecin
+        medecinRepository.delete(medecin);
+
+        // 5. Supprimer le compte utilisateur
+        userRepository.deleteById(userId);
+    }
 
     private MedecinResponse mapToResponse(Medecin medecin) {
         User user = medecin.getUser();

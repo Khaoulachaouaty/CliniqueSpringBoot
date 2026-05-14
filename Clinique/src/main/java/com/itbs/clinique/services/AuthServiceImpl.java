@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -50,11 +49,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         Role patientRole = roleRepository.findByRole("PATIENT")
-                .orElseGet(() -> {
-                    Role newRole = new Role();
-                    newRole.setRole("PATIENT");
-                    return roleRepository.save(newRole);
-                });
+                .orElseThrow(() -> new RuntimeException("Rôle PATIENT introuvable"));
 
         User user = new User();
         user.setUsername(request.getEmail());
@@ -63,7 +58,7 @@ public class AuthServiceImpl implements AuthService {
         user.setPrenom(request.getPrenom());
         user.setTel(request.getTel());
         user.setEnabled(true);
-        user.setRoles(Collections.singletonList(patientRole));
+        user.setRole(patientRole);
 
         User savedUser = userRepository.save(user);
 
@@ -73,7 +68,6 @@ public class AuthServiceImpl implements AuthService {
         patient.setDossierMedical(request.getDossierMedical());
         patientRepository.save(patient);
 
-        // Générer le token JWT pour connexion automatique après inscription
         UserDetails userDetails = userDetailsService.loadUserByUsername(savedUser.getUsername());
         String token = jwtUtils.generateToken(userDetails);
 
@@ -102,11 +96,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         Role medecinRole = roleRepository.findByRole("MEDECIN")
-                .orElseGet(() -> {
-                    Role newRole = new Role();
-                    newRole.setRole("MEDECIN");
-                    return roleRepository.save(newRole);
-                });
+                .orElseThrow(() -> new RuntimeException("Rôle MEDECIN introuvable"));
 
         User user = new User();
         user.setUsername(request.getEmail());
@@ -115,7 +105,7 @@ public class AuthServiceImpl implements AuthService {
         user.setPrenom(request.getPrenom());
         user.setTel(request.getTel());
         user.setEnabled(true);
-        user.setRoles(Collections.singletonList(medecinRole));
+        user.setRole(medecinRole);
 
         User savedUser = userRepository.save(user);
 
@@ -161,16 +151,13 @@ public class AuthServiceImpl implements AuthService {
         Long medecinId = medecinRepository.findByUserUserId(user.getUserId())
                 .map(Medecin::getId).orElse(null);
 
-        List<String> roleNames = user.getRoles().stream()
-                .map(Role::getRole)
-                .collect(Collectors.toList());
+        String roleName = user.getRole().getRole();
 
-        // Générer le JWT
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         String token = jwtUtils.generateToken(userDetails);
 
         System.out.println("✅ Login: " + user.getUsername() +
-                " | Rôles: " + roleNames +
+                " | Rôle: " + roleName +
                 " | PatientId: " + patientId +
                 " | MedecinId: " + medecinId);
 
@@ -180,7 +167,7 @@ public class AuthServiceImpl implements AuthService {
                 .userId(user.getUserId())
                 .email(user.getUsername())
                 .nomComplet(user.getNomComplet())
-                .roles(roleNames)
+                .roles(Collections.singletonList(roleName))
                 .token(token)
                 .patientId(patientId)
                 .medecinId(medecinId)
