@@ -73,7 +73,7 @@ export class AuthService {
             medecinId: response.medecinId   // 🔥 AJOUTÉ
           };
 
-          this.saveUser(user, role);
+          this.saveUser(user, role, response.token);
 
           return {
             success: true,
@@ -155,14 +155,18 @@ getEffectiveId(): number | null {
   logout(): void {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('token');
     this._currentUser.set(null);
     this._userRole.set(null);
     this._isLoggedIn.set(false);
   }
 
-  private saveUser(user: User, role: string): void {
+  private saveUser(user: User, role: string, token?: string): void {
     localStorage.setItem('currentUser', JSON.stringify(user));
     localStorage.setItem('userRole', role);
+    if (token) {
+      localStorage.setItem('token', token);
+    }
     this._userRole.set(role);
     this._currentUser.set(user);
     this._isLoggedIn.set(true);

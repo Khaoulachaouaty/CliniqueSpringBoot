@@ -43,9 +43,9 @@ export interface AuthResponse {
   email?: string;
   nomComplet?: string;
   roles?: string[];
-  patientId?: number; 
-  medecinId?: number;  
-
+  token?: string;
+  patientId?: number;
+  medecinId?: number;
 }
 
 // Garder pour compatibilité si besoin
