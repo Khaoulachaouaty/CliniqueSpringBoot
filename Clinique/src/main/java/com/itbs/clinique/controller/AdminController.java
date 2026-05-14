@@ -138,6 +138,30 @@ public class AdminController {
         return ResponseEntity.ok(new MessageResponse("Médecin supprimé avec succès", true));
     }
 
+    @Operation(summary = "Modifier un médecin", description = "Met à jour les informations d'un médecin (nom, prénom, téléphone, spécialité).")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Médecin mis à jour",
+            content = @Content(schema = @Schema(implementation = MedecinResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Médecin introuvable", content = @Content)
+    })
+    @PutMapping("/medecins/{id}")
+    public ResponseEntity<MedecinResponse> updateMedecin(
+            @Parameter(description = "ID du médecin", required = true, example = "1")
+            @PathVariable Long id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "Champs à modifier",
+                content = @Content(examples = @ExampleObject(value = """
+                    {
+                      "nom": "Martin",
+                      "prenom": "Sophie",
+                      "tel": "0698765432",
+                      "specialite": "Cardiologie"
+                    }""")))
+            @RequestBody UpdateMedecinRequest request) {
+        logger.info("✏️ Modification médecin: {}", id);
+        return ResponseEntity.ok(medecinService.updateMedecin(id, request));
+    }
+
     // ==================== PATIENTS ====================
 
     @Operation(summary = "Lister tous les patients", description = "Retourne la liste complète des patients enregistrés.")

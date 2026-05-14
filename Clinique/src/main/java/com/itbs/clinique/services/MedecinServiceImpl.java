@@ -1,6 +1,7 @@
 package com.itbs.clinique.services;
 
 import com.itbs.clinique.dto.MedecinResponse;
+import com.itbs.clinique.dto.UpdateMedecinRequest;
 import com.itbs.clinique.entities.Medecin;
 import com.itbs.clinique.entities.User;
 import com.itbs.clinique.repositories.ConsultationRepository;
@@ -114,5 +115,21 @@ public class MedecinServiceImpl implements MedecinService {
                 .tel(user.getTel())
                 .specialite(medecin.getSpecialite())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public MedecinResponse updateMedecin(Long id, UpdateMedecinRequest request) {
+        Medecin medecin = medecinRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Médecin non trouvé: " + id));
+
+        User user = medecin.getUser();
+        if (request.getNom() != null)       user.setNom(request.getNom());
+        if (request.getPrenom() != null)    user.setPrenom(request.getPrenom());
+        if (request.getTel() != null)       user.setTel(request.getTel());
+        if (request.getSpecialite() != null) medecin.setSpecialite(request.getSpecialite());
+
+        medecinRepository.save(medecin);
+        return mapToResponse(medecin);
     }
 }

@@ -181,7 +181,7 @@ export class PrendreRdvComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const patientId = this.authService.currentUser()?.userId;
+    const patientId = this.authService.getPatientId() ?? this.authService.currentUser()?.userId;
     if (!patientId) {
       this.errorMessage = 'Erreur: Patient non identifié. Veuillez vous reconnecter.';
       this.isLoading = false;
@@ -190,7 +190,7 @@ export class PrendreRdvComponent implements OnInit {
 
     const request: RendezVousRequest = {
       patientId,
-      medecinId: this.medecinSelectionne.id,
+      medecinId: this.medecinSelectionne.id,  // ID entité médecin (correct)
       date: this.dateSelectionnee,
       heure: this.creneauSelectionne,
       motif: this.rdvForm.value.motif

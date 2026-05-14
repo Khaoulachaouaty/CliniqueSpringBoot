@@ -69,17 +69,24 @@ public class RendezVousServiceImpl implements RendezVousService {
     
     @Override
     public RendezVousResponse createRendezVous(RendezVousRequest request) {
-        logger.info("📅 Création RDV: patientUserId={}, medecinUserId={}", 
+        logger.info("📅 Création RDV: patientId={}, medecinId={}", 
                    request.getPatientId(), request.getMedecinId());
-        
-        Long vraiPatientId = getPatientIdFromUserId(request.getPatientId());
-        Long vraiMedecinId = getMedecinIdFromUserId(request.getMedecinId());
 
-        Patient patient = patientRepository.findById(vraiPatientId)
-                .orElseThrow(() -> new RuntimeException("Patient non trouvé: " + vraiPatientId));
-        
-        Medecin medecin = medecinRepository.findById(vraiMedecinId)
-                .orElseThrow(() -> new RuntimeException("Médecin non trouvé: " + vraiMedecinId));
+        // Les IDs envoyés par le frontend sont déjà les IDs entités (patient.id, medecin.id)
+        // On tente d'abord une recherche directe, sinon on fait la conversion userId→entityId
+        Patient patient = patientRepository.findById(request.getPatientId())
+                .orElseGet(() -> {
+                    Long vraiId = getPatientIdFromUserId(request.getPatientId());
+                    return patientRepository.findById(vraiId)
+                            .orElseThrow(() -> new RuntimeException("Patient non trouvé: " + request.getPatientId()));
+                });
+
+        Medecin medecin = medecinRepository.findById(request.getMedecinId())
+                .orElseGet(() -> {
+                    Long vraiId = getMedecinIdFromUserId(request.getMedecinId());
+                    return medecinRepository.findById(vraiId)
+                            .orElseThrow(() -> new RuntimeException("Médecin non trouvé: " + request.getMedecinId()));
+                });
         
         // Validations
         if (!isFormatHeureValide(request.getHeure())) {

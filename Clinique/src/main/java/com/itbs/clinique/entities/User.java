@@ -12,7 +12,7 @@ import lombok.*;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)  //Auto-incrémentation MySQL
     private Long userId;
 
     @Column(unique = true)
@@ -28,7 +28,6 @@ public class User {
 
     private Boolean enabled;
 
-    // Un utilisateur a exactement un rôle (ADMIN, MEDECIN ou PATIENT)
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private Role role;
